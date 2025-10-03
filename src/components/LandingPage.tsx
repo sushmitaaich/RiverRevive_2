@@ -28,7 +28,7 @@ export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps
       <div 
         className="relative min-h-[60vh] bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url($(bgImage)`
+          backgroundImage: `url($(bgImage))`
         }}
       >
         {/* Overlay */}
