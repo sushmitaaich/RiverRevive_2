@@ -17,12 +17,12 @@ export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps
   };
 
   return (
-    <div className="min-h-screen bg-[#a5c3d7] py-12"
+    <div className="min-h-screen bg-[#a5c3d7]"
       style = {{
         paddingTop: '0rem', /* 48px */
         paddingBottom: '3rem' /* 48px */
       }}
-      >
+      > 
       {/* Hero Section with Background Image */}
       <div 
         className="relative min-h-[60vh] bg-cover bg-center bg-no-repeat"
