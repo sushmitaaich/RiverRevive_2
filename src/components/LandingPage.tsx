@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { User, Recycle, Shield, ChevronRight } from 'lucide-react';
+import bgImage from '../assets/Drone_background_home.jpg';
 
 interface LandingPageProps {
   onRoleSelect: (role: 'citizen' | 'collector' | 'admin') => void;
@@ -27,7 +28,7 @@ export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps
       <div 
         className="relative min-h-[60vh] bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('./Drone_background_home.jpg')`
+          backgroundImage: `url($(bgImage)`
         }}
       >
         {/* Overlay */}
