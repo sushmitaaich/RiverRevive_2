@@ -27,7 +27,7 @@ export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps
       <div 
         className="relative min-h-[60vh] bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/public/Drone_background_home.jpg')`
+          backgroundImage: `url('https://github.com/sushmitaaich/RiverRevive_2/blob/main/public/Drone_background_home.jpg')`
         }}
       >
         {/* Overlay */}
