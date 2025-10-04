@@ -1,5 +1,10 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Eye, EyeOff, User, Recycle, Shield } from 'lucide-react';
+
+import { supabase } from '../../lib/supabase';
+   // ← adjust path if necessary
 
 interface SignUpFormProps {
   onBack: () => void;
@@ -32,20 +37,44 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
       setLoading(false);
       return;
     }
-
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError('Password must be at least 6 characters');
       setLoading(false);
       return;
     }
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      alert('Registration successful! Your account is pending admin approval. You will receive an email once approved.');
+      // 1. Create auth user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.name,
+            role: formData.role,
+            phone: formData.phone,
+            location: formData.location,
+            organization: formData.organization
+          }
+        }
+      });
+      if (signUpError) throw signUpError;
+
+      // 2. Insert profile row (RLS will auto-link via auth.uid())
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: authData.user!.id,
+        full_name: formData.name,
+        role: formData.role,
+        phone: formData.phone,
+        location: formData.location,
+        organization: formData.organization,
+        approved: false
+      });
+      if (profileError) throw profileError;
+
       onSignUpSuccess();
-    } catch (err) {
-      setError('Registration failed. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -81,7 +110,6 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Role Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Select Your Role</label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -93,16 +121,14 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
                 <button
                   key={role.id}
                   type="button"
-                  onClick={() => setFormData({...formData, role: role.id as any})}
+                  onClick={() => setFormData({ ...formData, role: role.id as any })}
                   className={`p-4 border-2 rounded-lg transition-all ${
                     formData.role === role.id
                       ? getRoleColor(role.id)
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <div className="flex items-center justify-center mb-2">
-                    {getRoleIcon(role.id)}
-                  </div>
+                  <div className="flex items-center justify-center mb-2">{getRoleIcon(role.id)}</div>
                   <h3 className="font-medium">{role.label}</h3>
                   <p className="text-xs mt-1 opacity-75">{role.desc}</p>
                 </button>
@@ -110,14 +136,13 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
             </div>
           </div>
 
-          {/* Personal Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter your full name"
                 required
@@ -128,7 +153,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter your email"
                 required
@@ -143,7 +168,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
                   placeholder="Create a password"
                   required
@@ -163,7 +188,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
                   placeholder="Confirm your password"
                   required
@@ -185,7 +210,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
               <input
                 type="tel"
                 value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter your phone number"
                 required
@@ -196,7 +221,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
               <input
                 type="text"
                 value={formData.location}
-                onChange={(e) => setFormData({...formData, location: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="City, State"
                 required
@@ -212,7 +237,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
               <input
                 type="text"
                 value={formData.organization}
-                onChange={(e) => setFormData({...formData, organization: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder={formData.role === 'admin' ? 'e.g., Delhi Municipal Corporation' : 'e.g., Green Clean Services'}
                 required
@@ -221,9 +246,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
           )}
 
           {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">
-              {error}
-            </div>
+            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>
           )}
 
           <div className="flex space-x-4">
