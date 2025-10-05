@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase';
 
 interface SignUpFormProps {
   onBack: () => void;
-  onSignUpSuccess?: () => void; // optional parent callback
+  onSignUpSuccess?: () => void;
 }
 
 export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps) {
@@ -48,7 +48,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
     }
 
     try {
-      /* 1. auth user */
+      /* 1️⃣  CREATE AUTH USER FIRST (guarantees JWT) */
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -64,7 +64,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
       });
       if (signUpError) throw signUpError;
 
-      /* 2. profile row (RLS: auth.uid() = id) */
+      /* 2️⃣  INSERT PROFILE ONLY AFTER JWT EXISTS */
       const { error: profileError } = await supabase.from('profiles').insert({
         id: authData.user!.id,
         full_name: formData.name,
@@ -76,7 +76,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
       });
       if (profileError) throw profileError;
 
-      /* 3. show banner + optional parent callback */
+      /* 3️⃣  SUCCESS */
       setMailSent(true);
       onSignUpSuccess?.();
     } catch (err: any) {
