@@ -1,5 +1,4 @@
-'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -14,32 +13,17 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  /* Auto-handle email confirmation token */
-  useEffect(() => {
-    const handleToken = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const tokenHash = params.get('token_hash');
-      const type = params.get('type');
-      if (tokenHash && type === 'email') {
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: 'email',
-        });
-        if (!error) window.location.replace('/login'); // clean URL
-      }
-    };
-    handleToken();
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      /* 1️⃣  Auth check */
-      const { data: signInData, error: signInError } =
-        await supabase.auth.signInWithPassword({ email, password });
+      // 1️⃣ Sign in
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
       if (signInError) {
         setError('Invalid email or password.');
@@ -54,7 +38,7 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
         return;
       }
 
-      /* 2️⃣  Fetch role & approval */
+      // 2️⃣ Fetch profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role, approved, status, full_name')
@@ -67,18 +51,16 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
         return;
       }
 
-      /* 3️⃣  Approval gates */
+      // 3️⃣ Approval check
       if (!profile.approved || profile.status !== 'approved') {
         setError('Your account is pending admin approval.');
         setLoading(false);
         return;
       }
 
-      /* 4️⃣  Role-based redirect */
-      const role = profile.role?.toLowerCase();
+      // ✅ Success — reload app to trigger App.tsx dashboard load
       alert(`Welcome back, ${profile.full_name || 'User'}!`);
-      window.location.href = `/dashboard/${role}`;
-
+      window.location.reload();
     } catch (err) {
       console.error(err);
       setError('Unexpected error. Please try again.');
@@ -124,9 +106,7 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
           </div>
         </div>
 
-        {error && (
-          <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>
-        )}
+        {error && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
 
         <button
           type="submit"
