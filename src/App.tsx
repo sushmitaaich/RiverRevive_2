@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LandingPage from './components/LandingPage';
 import LoginForm from './components/auth/LoginForm';
@@ -10,7 +10,7 @@ import AdminDashboard from './components/dashboard/AdminDashboard';
 import Gallery from './components/Gallery';
 import { supabase } from './lib/supabase';
 
-(window as any).supabase = supabase; // For debugging in console
+(window as any).supabase = supabase;
 
 function AppContent() {
   const { user } = useAuth();
@@ -18,11 +18,10 @@ function AppContent() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'citizen' | 'collector' | 'admin' | null>(null);
-
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
-  // Fetch user profile from Supabase after login
+  // Fetch profile when logged in
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) {
@@ -44,9 +43,6 @@ function AppContent() {
         } else {
           setProfile(data);
         }
-      } catch (err) {
-        console.error('Unexpected error fetching profile:', err);
-        setProfile(null);
       } finally {
         setLoadingProfile(false);
       }
@@ -55,7 +51,7 @@ function AppContent() {
     fetchProfile();
   }, [user]);
 
-  // 🧩 Not logged in → show landing, login, or signup
+  // Not logged in
   if (!user) {
     if (showSignUp)
       return (
@@ -94,45 +90,26 @@ function AppContent() {
     );
   }
 
-  // 🕐 Loading state
-  if (loadingProfile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600">
-        Loading your dashboard...
-      </div>
-    );
-  }
+  // Loading or pending approval
+  if (loadingProfile)
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
-  // ⚠ Profile missing or not approved
-  if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600">
-        Fetching profile details...
-      </div>
-    );
-  }
+  if (!profile)
+    return <div className="min-h-screen flex items-center justify-center">Profile not found.</div>;
 
-  if (!profile.approved || profile.status !== 'approved') {
+  if (!profile.approved || profile.status !== 'approved')
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
         Your account is pending admin approval.
       </div>
     );
-  }
 
-  // ✅ Role-based dashboard rendering
+  // Role-based dashboard rendering
+  const role = profile.role?.toLowerCase();
   const renderDashboard = () => {
-    const role = profile.role?.toLowerCase();
-    switch (role) {
-      case 'admin':
-        return <AdminDashboard />;
-      case 'collector':
-      case 'garbage_collector':
-        return <CollectorDashboard />;
-      case 'citizen':
-      default:
-        return <CitizenDashboard />;
-    }
+    if (role === 'admin') return <AdminDashboard />;
+    if (role === 'collector' || role === 'garbage_collector') return <CollectorDashboard />;
+    return <CitizenDashboard />;
   };
 
   const renderCurrentPage = () => {
@@ -145,7 +122,7 @@ function AppContent() {
       <Header />
       <main>{renderCurrentPage()}</main>
 
-      {/* Floating bottom navigation */}
+      {/* Floating nav buttons */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col space-y-3">
         <button
           onClick={() => setCurrentPage('dashboard')}

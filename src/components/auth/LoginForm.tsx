@@ -2,11 +2,9 @@ import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
 
-interface LoginFormProps {
-  selectedRole?: 'citizen' | 'collector' | 'admin' | null;
-}
+interface LoginFormProps {}
 
-export default function LoginForm({ selectedRole }: LoginFormProps) {
+export default function LoginForm({}: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -19,11 +17,9 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
     setLoading(true);
 
     try {
-      // 1️⃣ Sign in
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // 🧩 1️⃣ Sign in with Supabase Auth
+      const { data: signInData, error: signInError } =
+        await supabase.auth.signInWithPassword({ email, password });
 
       if (signInError) {
         setError('Invalid email or password.');
@@ -31,14 +27,14 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
         return;
       }
 
-      const user = signInData.user;
+      const user = signInData?.user;
       if (!user) {
         setError('Login failed. Please try again.');
         setLoading(false);
         return;
       }
 
-      // 2️⃣ Fetch profile
+      // 🧩 2️⃣ Fetch profile role
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role, approved, status, full_name')
@@ -46,23 +42,25 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
         .single();
 
       if (profileError || !profile) {
+        console.error('Profile fetch error:', profileError);
         setError('Profile not found. Contact admin.');
         setLoading(false);
         return;
       }
 
-      // 3️⃣ Approval check
+      // 🧩 3️⃣ Approval check
       if (!profile.approved || profile.status !== 'approved') {
         setError('Your account is pending admin approval.');
         setLoading(false);
         return;
       }
 
-      // ✅ Success — reload app to trigger App.tsx dashboard load
+      // ✅ 4️⃣ Success — trigger dashboard rendering (no redirect)
       alert(`Welcome back, ${profile.full_name || 'User'}!`);
-      window.location.reload();
+      // Force reload so App.tsx detects logged-in user and shows correct dashboard
+      window.location.href = '/'; // Stay in same app, not /dashboard/...
     } catch (err) {
-      console.error(err);
+      console.error('Login error:', err);
       setError('Unexpected error. Please try again.');
     } finally {
       setLoading(false);
