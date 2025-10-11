@@ -22,6 +22,12 @@ function AppContent() {
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
+  // src/App.tsx
+  // Remove misplaced JSX. If you intend to use routing, import and use Routes/Route inside your render logic.
+  // Example import (add at the top if needed):
+  // import { Routes, Route, Navigate } from 'react-router-dom';
+  // import EmailConfirmed from './components/auth/EmailConfirmed';
+
   /* Fetch profile once user logs in */
   useEffect(() => {
     if (!user) return;
