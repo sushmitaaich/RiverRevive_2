@@ -56,7 +56,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
           data: {
             full_name: formData.name,
             role: formData.role,
-            phone: formData.phone,
+            phone_number: formData.phone,   // matches DB column
             location: formData.location,
             organization: formData.organization
           }
@@ -69,7 +69,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
         id: authData.user!.id,
         full_name: formData.name,
         role: formData.role,
-        phone: formData.phone,
+        phone_number: formData.phone,   // FIXED: real column name
         location: formData.location,
         organization: formData.organization,
         approved: false
