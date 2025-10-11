@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase'; // <-- ensure this path is correct
 import { Eye, EyeOff } from 'lucide-react';
 
 interface LoginFormProps {
@@ -12,17 +12,81 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
-      await login(email, password);
+      // Sign in with Supabase (v2)
+      const { data: signInData, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+      if (signInError) {
+        console.error('signInError:', signInError);
+        setError('Invalid credentials. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // signInData may contain session and/or user depending on environment
+      // Prefer session?.user, then user
+      const user =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (signInData as any)?.user ?? (signInData as any)?.session?.user;
+
+      if (!user || !user.id) {
+        console.error('No user returned from signIn:', signInData);
+        setError('Authentication failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch profile row by auth user id
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('profile fetch error:', profileError);
+        setError('Unable to fetch user profile. Please contact support.');
+        setLoading(false);
+        return;
+      }
+
+      // profileData now present
+      // Check approval and status
+      if (!profileData.approved || profileData.status === 'pending') {
+        setError('Your account is pending admin approval. Please wait for confirmation.');
+        setLoading(false);
+        return;
+      }
+
+      if (profileData.status === 'rejected') {
+        setError('Your registration was rejected. Please contact admin for details.');
+        setLoading(false);
+        return;
+      }
+
+      // SUCCESS - redirect or update app state as needed
+      // Example simple redirect by role
+      if (profileData.role === 'admin') {
+        window.location.href = '/dashboard/admin';
+      } else if (profileData.role === 'collector') {
+        window.location.href = '/dashboard/collector';
+      } else {
+        window.location.href = '/dashboard/citizen';
+      }
+
     } catch (err) {
-      setError('Invalid credentials. Please try again.');
+      console.error('Unhandled login error:', err);
+      setError('Login failed. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -36,7 +100,9 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
         </div>
         <h2 className="text-2xl font-bold text-gray-900">Welcome to RiverRevive</h2>
         <p className="text-gray-600 mt-2">
-          {selectedRole ? `Sign in as ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}` : 'Sign in to your account'}
+          {selectedRole
+            ? `Sign in as ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}`
+            : 'Sign in to your account'}
         </p>
       </div>
 
