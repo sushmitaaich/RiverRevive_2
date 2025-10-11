@@ -5,12 +5,15 @@ import LoginForm from './components/auth/LoginForm';
 import SignUpForm from './components/auth/SignUpForm';
 import Header from './components/Header';
 import CitizenDashboard from './components/dashboard/CitizenDashboard';
-import CollectorDashboard from './components/dashboard/CollectorDashboard';
 import AdminDashboard from './components/dashboard/AdminDashboard';
 import Gallery from './components/Gallery';
 import { supabase } from './lib/supabase';
 
 (window as any).supabase = supabase; // for debugging in browser console
+
+import CollectorDashboard from './components/dashboard/CollectorDashboard';
+
+// Removed duplicate App function implementation
 
 function AppContent() {
   const { user } = useAuth();
