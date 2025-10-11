@@ -1,15 +1,35 @@
-import React, { useState } from 'react';
+'use client';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
 
-interface LoginFormProps {}
+interface LoginFormProps {
+  selectedRole?: 'citizen' | 'collector' | 'admin' | null;
+}
 
-export default function LoginForm({}: LoginFormProps) {
+export default function LoginForm({ selectedRole }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  /* Auto-handle email confirmation token */
+  useEffect(() => {
+    const handleToken = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const tokenHash = params.get('token_hash');
+      const type = params.get('type');
+      if (tokenHash && type === 'email') {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'email',
+        });
+        if (!error) window.location.replace('/login'); // clean URL
+      }
+    };
+    handleToken();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +124,9 @@ export default function LoginForm({}: LoginFormProps) {
           </div>
         </div>
 
-        {error && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
+        {error && (
+          <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{error}</div>
+        )}
 
         <button
           type="submit"
