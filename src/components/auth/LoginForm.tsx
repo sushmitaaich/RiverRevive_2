@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
 
-export default function LoginForm() {
+interface LoginFormProps {
+  selectedRole?: 'citizen' | 'collector' | 'admin' | null;
+}
+
+export default function LoginForm({ selectedRole }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,11 +19,9 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      // 1️⃣ Authenticate user
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      /* 1️⃣  Auth check */
+      const { data: signInData, error: signInError } =
+        await supabase.auth.signInWithPassword({ email, password });
 
       if (signInError) {
         setError('Invalid email or password.');
@@ -34,7 +36,7 @@ export default function LoginForm() {
         return;
       }
 
-      // 2️⃣ Fetch role from profiles
+      /* 2️⃣  Fetch role & approval */
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role, approved, status, full_name')
@@ -47,28 +49,18 @@ export default function LoginForm() {
         return;
       }
 
-      // 3️⃣ Check approval
+      /* 3️⃣  Approval gates */
       if (!profile.approved || profile.status !== 'approved') {
         setError('Your account is pending admin approval.');
         setLoading(false);
         return;
       }
 
-      // 4️⃣ Role-based redirection
+      /* 4️⃣  Role-based redirect */
       const role = profile.role?.toLowerCase();
-      console.log('User role:', role);
-
       alert(`Welcome back, ${profile.full_name || 'User'}!`);
+      window.location.href = `/dashboard/${role}`;
 
-      if (role === 'admin') {
-        window.location.href = '/dashboard/admin';
-      } else if (role === 'collector' || role === 'garbage_collector') {
-        window.location.href = '/dashboard/collector';
-      } else if (role === 'citizen') {
-        window.location.href = '/dashboard/citizen';
-      } else {
-        window.location.href = '/dashboard';
-      }
     } catch (err) {
       console.error(err);
       setError('Unexpected error. Please try again.');
