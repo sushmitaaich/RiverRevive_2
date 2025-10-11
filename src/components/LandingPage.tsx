@@ -29,7 +29,7 @@ export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps
         className="relative min-h-[60vh] bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url('./Drone_background_home.jpg')`,
-          backgroundAttachment: 'scroll',
+          backgroundSize: '100% 100%',
         }}
       >
         {/* Overlay */}
