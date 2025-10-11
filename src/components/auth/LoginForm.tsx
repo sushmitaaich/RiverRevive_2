@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff } from 'lucide-react';
 
-interface LoginFormProps {}
+interface LoginFormProps {
+   selectedRole?: 'citizen' | 'collector' | 'admin' | null;
+}
 
 export default function LoginForm({}: LoginFormProps) {
   const [email, setEmail] = useState('');
