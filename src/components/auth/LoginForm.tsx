@@ -19,7 +19,7 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
     setLoading(true);
 
     try {
-      // 1️⃣ Login with Supabase Auth
+      // 🧩 1️⃣ Login using Supabase Auth
       const { data: signInData, error: signInError } =
         await supabase.auth.signInWithPassword({
           email,
@@ -27,6 +27,7 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
         });
 
       if (signInError) {
+        console.error('Auth error:', signInError);
         setError('Invalid email or password.');
         setLoading(false);
         return;
@@ -39,22 +40,16 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
         return;
       }
 
-      // 2️⃣ Check if profile exists
+      // 🧩 2️⃣ Fetch existing profile
       const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        // Ignore "no rows" error, handle others
-        console.error('Profile fetch error:', fetchError);
-      }
-
-      // 3️⃣ Create profile if missing (first login after verification)
-      if (!existingProfile) {
+      // 🧩 3️⃣ If profile doesn’t exist, create one
+      if (fetchError || !existingProfile) {
         const role = selectedRole || 'citizen';
-
         const { error: insertError } = await supabase.from('profiles').insert([
           {
             id: user.id,
@@ -64,37 +59,41 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
             phone_number: '',
             location: '',
             organization: '',
-            status: 'pending',
-            approved: false,
+            status: 'approved', // ✅ automatically approved
+            approved: true,
           },
         ]);
 
         if (insertError) {
-          console.error('Insert profile error:', insertError);
-          setError(
-            'Profile could not be created automatically. Please contact admin.'
-          );
+          console.error('Profile insert error:', insertError);
+          setError('Profile creation failed.');
           setLoading(false);
           return;
         }
 
-        alert(
-          'Profile created successfully! Your account is pending admin approval.'
-        );
+        alert(`Welcome, ${role}! Your account is now active.`);
         window.location.href = '/';
         return;
       }
 
-      // 4️⃣ Approval check
+      // 🧩 4️⃣ If profile exists but is pending — auto-approve now
       if (!existingProfile.approved || existingProfile.status !== 'approved') {
-        setError('Your account is pending admin approval.');
-        setLoading(false);
-        return;
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ approved: true, status: 'approved' })
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.error('Auto-approve error:', updateError);
+          setError('Account approval failed.');
+          setLoading(false);
+          return;
+        }
       }
 
-      // ✅ 5️⃣ Success — trigger dashboard rendering
+      // ✅ 5️⃣ Success — login complete
       alert(`Welcome back, ${existingProfile.full_name || 'User'}!`);
-      window.location.href = '/'; // stay in app, App.tsx will load correct dashboard
+      window.location.href = '/'; // Let App.tsx load correct dashboard
     } catch (err) {
       console.error('Login error:', err);
       setError('Unexpected error. Please try again.');
