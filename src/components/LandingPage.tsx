@@ -26,12 +26,15 @@ export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps
       > 
       {/* Hero Section with Background Image */}
       <div 
-        className="relative min-h-[60vh] bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('./Drone_background_home.jpg')`,
-          backgroundSize: '100% 100%',
-        }}
-      >
+        className="relative min-h-[60vh]">
+      
+         {/* Image that scales with zoom */}
+        <img
+          src="/Drone_background_home.jpg"
+          alt="Hero Background"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        
         {/* Overlay */}
         <div className="absolute inset-0 bg-black/40"></div>
         
