@@ -1,16 +1,13 @@
-'use client';
-
 import React, { useState } from 'react';
 import { Eye, EyeOff, User, Recycle, Shield } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase'; // ✅ ensure correct import path
 
 interface SignUpFormProps {
   onBack: () => void;
-  onSignUpSuccess?: () => void;
+  onSignUpSuccess: () => void;
 }
 
 export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps) {
-  /* ---------- form state ---------- */
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -21,83 +18,99 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
     location: '',
     organization: ''
   });
-  const [showPw, setShowPw] = useState(false);
-  const [showPwConf, setShowPwConf] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  /* NEW: success banner */
-  const [mailSent, setMailSent] = useState(false);
-
-  /* ---------- submit ---------- */
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
-  setMailSent(false);
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-  if (formData.password !== formData.confirmPassword) {
-    setError('Passwords do not match');
-    setLoading(false);
-    return;
-  }
-  if (formData.password.length < 6) {
-    setError('Password must be ≥ 6 characters');
-    setLoading(false);
-    return;
-  }
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
 
-  try {
-    /* 1️⃣  CREATE AUTH USER → guarantees JWT */
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: {
-          full_name: formData.name,
-          role: formData.role,
-          phone: formData.phone,
-          location: formData.location,
-          organization: formData.organization
-        }
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // 1️⃣ Create user in Supabase Auth
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (signUpError) {
+        setError(signUpError.message);
+        setLoading(false);
+        return;
       }
-    });
-    if (signUpError) throw signUpError;
 
-    /* 2️⃣  INSERT PROFILE ONLY AFTER JWT EXISTS */
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: authData.user!.id,
-      full_name: formData.name,
-      role: formData.role,
-      phone: formData.phone,
-      location: formData.location,
-      organization: formData.organization,
-      approved: false
-    });
-    if (profileError) throw profileError;
+      const user = data.user;
+      if (!user) {
+        setError('Signup failed. Please try again.');
+        setLoading(false);
+        return;
+      }
 
-    /* 3️⃣  SUCCESS */
-    setMailSent(true);
-    onSignUpSuccess?.();
-  } catch (err: any) {
-    setError(err.message || 'Registration failed');
-  } finally {
-    setLoading(false);
-  }
-};
+      // 2️⃣ Ensure we have an active session
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log("Session:", sessionData);
 
-  /* ---------- helpers ---------- */
-  const roleIcon = (r: string) =>
-    r === 'citizen' ? <User className="w-5 h-5" /> :
-    r === 'collector' ? <Recycle className="w-5 h-5" /> :
-    <Shield className="w-5 h-5" />;
+      // 3️⃣ Insert profile data into Supabase 'profiles' table
+      const { error: insertError } = await supabase.from('profiles').insert([
+        {
+          id: user.id, // 🔑 must match auth.uid() for RLS
+          full_name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          phone_number: formData.phone,
+          location: formData.location,
+          organization: formData.organization,
+          status: 'pending', // optional field for admin approval
+        },
+      ]);
 
-  const roleColor = (r: string) =>
-    r === 'citizen' ? 'border-blue-500 bg-blue-50 text-blue-700' :
-    r === 'collector' ? 'border-green-500 bg-green-50 text-green-700' :
-    'border-purple-500 bg-purple-50 text-purple-700';
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        setError(insertError.message);
+      } else {
+        alert('Registration successful! Your account is pending admin approval.');
+        onSignUpSuccess();
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  /* ---------- UI ---------- */
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'citizen': return <User className="w-5 h-5" />;
+      case 'collector': return <Recycle className="w-5 h-5" />;
+      case 'admin': return <Shield className="w-5 h-5" />;
+      default: return <User className="w-5 h-5" />;
+    }
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'citizen': return 'border-blue-500 bg-blue-50 text-blue-700';
+      case 'collector': return 'border-green-500 bg-green-50 text-green-700';
+      case 'admin': return 'border-purple-500 bg-purple-50 text-purple-700';
+      default: return 'border-gray-300 bg-gray-50 text-gray-700';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center py-8">
       <div className="w-full max-w-2xl bg-white rounded-xl shadow-lg p-8">
@@ -109,15 +122,8 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
           <p className="text-gray-600 mt-2">Create your account to help clean our rivers</p>
         </div>
 
-        {/*  ✅  success banner  */}
-        {mailSent && (
-          <div className="mb-6 p-4 bg-green-50 text-green-800 rounded-lg border border-green-200">
-            ✅ Check your email to confirm your account.
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/*  role cards  */}
+          {/* Role Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Select Your Role</label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -129,12 +135,16 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
                 <button
                   key={role.id}
                   type="button"
-                  onClick={() => setFormData({ ...formData, role: role.id as any })}
+                  onClick={() => setFormData({...formData, role: role.id as any})}
                   className={`p-4 border-2 rounded-lg transition-all ${
-                    formData.role === role.id ? roleColor(role.id) : 'border-gray-200 hover:border-gray-300'
+                    formData.role === role.id
+                      ? getRoleColor(role.id)
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <div className="flex items-center justify-center mb-2">{roleIcon(role.id)}</div>
+                  <div className="flex items-center justify-center mb-2">
+                    {getRoleIcon(role.id)}
+                  </div>
                   <h3 className="font-medium">{role.label}</h3>
                   <p className="text-xs mt-1 opacity-75">{role.desc}</p>
                 </button>
@@ -142,50 +152,51 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
             </div>
           </div>
 
-          {/*  inputs  */}
+          {/* Personal Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
               <input
                 type="text"
-                required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter your full name"
+                required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <input
                 type="email"
-                required
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter your email"
+                required
               />
             </div>
           </div>
 
+          {/* Password Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <input
-                  type={showPw ? 'text' : 'password'}
-                  required
+                  type={showPassword ? 'text' : 'password'}
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
                   placeholder="Create a password"
+                  required
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPw((s) => !s)}
+                  onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 >
-                  {showPw ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
@@ -193,45 +204,46 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
               <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
               <div className="relative">
                 <input
-                  type={showPwConf ? 'text' : 'password'}
-                  required
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
                   placeholder="Confirm your password"
+                  required
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPwConf((s) => !s)}
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 >
-                  {showPwConf ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
           </div>
 
+          {/* Phone and Location */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
               <input
                 type="tel"
-                required
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) => setFormData({...formData, phone: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter your phone number"
+                required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
               <input
                 type="text"
-                required
                 value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                onChange={(e) => setFormData({...formData, location: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="City, State"
+                required
               />
             </div>
           </div>
@@ -239,21 +251,29 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
           {(formData.role === 'collector' || formData.role === 'admin') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {formData.role === 'admin' ? 'Municipal Corporation/Department' : 'Organization/Company'}
+                {formData.role === 'admin'
+                  ? 'Municipal Corporation/Department'
+                  : 'Organization/Company'}
               </label>
               <input
                 type="text"
-                required
                 value={formData.organization}
-                onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                onChange={(e) => setFormData({...formData, organization: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder={formData.role === 'admin' ? 'e.g., Delhi Municipal Corporation' : 'e.g., Green Clean Services'}
+                placeholder={
+                  formData.role === 'admin'
+                    ? 'e.g., Delhi Municipal Corporation'
+                    : 'e.g., Green Clean Services'
+                }
+                required
               />
             </div>
           )}
 
           {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200">{error}</div>
+            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+              {error}
+            </div>
           )}
 
           <div className="flex space-x-4">
@@ -267,7 +287,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
