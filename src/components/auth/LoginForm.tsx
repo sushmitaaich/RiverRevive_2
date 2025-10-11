@@ -76,12 +76,29 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
 
       // SUCCESS - redirect or update app state as needed
       // Example simple redirect by role
-      if (profileData.role === 'admin') {
+      {/*if (profileData.role === 'admin') {
         window.location.href = '/dashboard/admin';
       } else if (profileData.role === 'collector') {
         window.location.href = '/dashboard/collector';
       } else {
         window.location.href = '/dashboard/citizen';
+      }*/}
+
+      // ✅ All checks passed
+      alert(`Welcome back, ${profileData.full_name || 'User'}!`);
+
+      const role = profileData.role?.toLowerCase();
+
+      if (role === 'admin') {
+        window.location.href = '/dashboard/admin';
+      } else if (role === 'collector' || role === 'garbage_collector' || role === 'garbage collector') {
+        // Match both stored forms
+        window.location.href = '/dashboard/collector';
+      } else if (role === 'citizen') {
+        window.location.href = '/dashboard/citizen';
+      } else {
+        // Fallback for unexpected role
+        window.location.href = '/dashboard';
       }
 
     } catch (err) {
