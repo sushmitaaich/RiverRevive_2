@@ -8,6 +8,8 @@ import CitizenDashboard from './components/dashboard/CitizenDashboard';
 import CollectorDashboard from './components/dashboard/CollectorDashboard';
 import AdminDashboard from './components/dashboard/AdminDashboard';
 import Gallery from './components/Gallery';
+import { supabase } from './lib/supabase';
+(window as any).supabase = supabase; // for debugging
 
 function AppContent() {
   const { user } = useAuth();
