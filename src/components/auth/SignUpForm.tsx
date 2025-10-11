@@ -31,60 +31,60 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
 
   /* ---------- submit ---------- */
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setMailSent(false);
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setMailSent(false);
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
-    }
-    if (formData.password.length < 6) {
-      setError('Password must be ≥ 6 characters');
-      setLoading(false);
-      return;
-    }
+  if (formData.password !== formData.confirmPassword) {
+    setError('Passwords do not match');
+    setLoading(false);
+    return;
+  }
+  if (formData.password.length < 6) {
+    setError('Password must be ≥ 6 characters');
+    setLoading(false);
+    return;
+  }
 
-    try {
-      /* 1️⃣  CREATE AUTH USER FIRST (guarantees JWT) */
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.name,
-            role: formData.role,
-            phone: formData.phone,
-            location: formData.location,
-            organization: formData.organization
-          }
+  try {
+    /* 1️⃣  CREATE AUTH USER → guarantees JWT */
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        data: {
+          full_name: formData.name,
+          role: formData.role,
+          phone: formData.phone,
+          location: formData.location,
+          organization: formData.organization
         }
-      });
-      if (signUpError) throw signUpError;
+      }
+    });
+    if (signUpError) throw signUpError;
 
-      /* 2️⃣  INSERT PROFILE ONLY AFTER JWT EXISTS */
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: authData.user!.id,
-        full_name: formData.name,
-        role: formData.role,
-        phone: formData.phone,
-        location: formData.location,
-        organization: formData.organization,
-        approved: false
-      });
-      if (profileError) throw profileError;
+    /* 2️⃣  INSERT PROFILE ONLY AFTER JWT EXISTS */
+    const { error: profileError } = await supabase.from('profiles').insert({
+      id: authData.user!.id,
+      full_name: formData.name,
+      role: formData.role,
+      phone: formData.phone,
+      location: formData.location,
+      organization: formData.organization,
+      approved: false
+    });
+    if (profileError) throw profileError;
 
-      /* 3️⃣  SUCCESS */
-      setMailSent(true);
-      onSignUpSuccess?.();
-    } catch (err: any) {
-      setError(err.message || 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+    /* 3️⃣  SUCCESS */
+    setMailSent(true);
+    onSignUpSuccess?.();
+  } catch (err: any) {
+    setError(err.message || 'Registration failed');
+  } finally {
+    setLoading(false);
+  }
+};
 
   /* ---------- helpers ---------- */
   const roleIcon = (r: string) =>
