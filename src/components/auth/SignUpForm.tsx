@@ -53,7 +53,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
             location: formData.location,
             organization: formData.organization
           },
-          emailRedirectTo: `${window.location.origin}/login` // ← no 404
+          emailRedirectTo: `${window.location.origin}/` // ← no 404
         }
       });
       if (signUpError) throw signUpError;
