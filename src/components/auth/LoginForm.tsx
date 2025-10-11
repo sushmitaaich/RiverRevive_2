@@ -84,22 +84,26 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
         window.location.href = '/dashboard/citizen';
       }*/}
 
-      // ✅ All checks passed
-      alert(`Welcome back, ${profileData.full_name || 'User'}!`);
+              // ✅ All checks passed
+        alert(`Welcome back, ${profileData.full_name || 'User'}!`);
 
-      const role = profileData.role?.toLowerCase();
+        // Normalize role string (remove spaces, lowercase)
+        const role = profileData.role?.toLowerCase().replace(/\s+/g, '_');
 
-      if (role === 'admin') {
-        window.location.href = '/dashboard/admin';
-      } else if (role === 'collector' || role === 'garbage_collector' || role === 'garbage collector') {
-        // Match both stored forms
-        window.location.href = '/dashboard/collector';
-      } else if (role === 'citizen') {
-        window.location.href = '/dashboard/citizen';
-      } else {
-        // Fallback for unexpected role
-        window.location.href = '/dashboard';
-      }
+        console.log("User role detected:", role); // 🧩 Debug log
+
+        // Redirect based on role
+        if (role === 'admin') {
+          window.location.href = '/dashboard/admin';
+        } else if (role === 'collector' || role === 'garbage_collector') {
+          window.location.href = '/dashboard/collector';
+        } else if (role === 'citizen') {
+          window.location.href = '/dashboard/citizen';
+        } else {
+          // fallback
+          console.warn("Unknown role, redirecting to default dashboard");
+          window.location.href = '/dashboard';
+        }
 
     } catch (err) {
       console.error('Unhandled login error:', err);
