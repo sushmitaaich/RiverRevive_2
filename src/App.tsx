@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LandingPage from './components/LandingPage';
 import LoginForm from './components/auth/LoginForm';
@@ -10,11 +10,11 @@ import AdminDashboard from './components/dashboard/AdminDashboard';
 import Gallery from './components/Gallery';
 import { supabase } from './lib/supabase';
 
-(window as any).supabase = supabase; // debug only
+(window as any).supabase = supabase; // for debugging in browser console
 
 function AppContent() {
   const { user } = useAuth();
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'gallery'>('dashboard');
   const [showLogin, setShowLogin] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'citizen' | 'collector' | 'admin' | null>(null);
@@ -22,31 +22,42 @@ function AppContent() {
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
-  // src/App.tsx
-  // Remove misplaced JSX. If you intend to use routing, import and use Routes/Route inside your render logic.
-  // Example import (add at the top if needed):
-  // import { Routes, Route, Navigate } from 'react-router-dom';
-  // import EmailConfirmed from './components/auth/EmailConfirmed';
-
-  /* Fetch profile once user logs in */
+  // 🧩 Fetch user profile from Supabase after login
   useEffect(() => {
-    if (!user) return;
-    setLoadingProfile(true);
-    supabase
-      .from('profiles')
-      .select('role, full_name, approved, status')
-      .eq('id', user.id)
-      .single()
-      .then(({ data, error }) => {
-        if (error) console.error('Profile fetch:', error);
-        else setProfile(data);
+    const fetchProfile = async () => {
+      if (!user) {
+        setProfile(null);
+        return;
+      }
+
+      setLoadingProfile(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role, full_name, approved, status')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching profile:', error);
+          setProfile(null);
+        } else {
+          setProfile(data);
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching profile:', err);
+        setProfile(null);
+      } finally {
         setLoadingProfile(false);
-      });
+      }
+    };
+
+    fetchProfile();
   }, [user]);
 
-  /* ----------  NOT LOGGED IN  ---------- */
+  // 🟢 If user not logged in
   if (!user) {
-    if (showSignUp)
+    if (showSignUp) {
       return (
         <SignUpForm
           onBack={() => setShowSignUp(false)}
@@ -56,8 +67,9 @@ function AppContent() {
           }}
         />
       );
+    }
 
-    if (!showLogin)
+    if (!showLogin) {
       return (
         <LandingPage
           onRoleSelect={(role) => {
@@ -67,6 +79,7 @@ function AppContent() {
           onSignUp={() => setShowSignUp(true)}
         />
       );
+    }
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
@@ -83,25 +96,54 @@ function AppContent() {
     );
   }
 
-  /* ----------  LOADING PROFILE  ---------- */
-  if (loadingProfile || !profile)
+  // 🟡 While profile is loading
+  if (loadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
         Loading your dashboard...
       </div>
     );
+  }
 
-  /* ----------  ROLE-BASED DASHBOARD  ---------- */
+  // 🔴 If profile not found or not approved yet
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center text-gray-600">
+        <p className="mb-3">Unable to fetch your profile information.</p>
+        <p className="text-sm text-gray-500">
+          Please try logging out and signing in again.
+        </p>
+      </div>
+    );
+  }
+
+  if (!profile.approved || profile.status !== 'approved') {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        Your account is pending admin approval.
+      </div>
+    );
+  }
+
+  // ✅ Role-based dashboard rendering
   const renderDashboard = () => {
     const role = profile.role?.toLowerCase();
-    if (role === 'admin') return <AdminDashboard />;
-    if (role === 'collector') return <CollectorDashboard />;
-    return <CitizenDashboard />; // fallback
+    switch (role) {
+      case 'admin':
+        return <AdminDashboard />;
+      case 'collector':
+      case 'garbage_collector':
+        return <CollectorDashboard />;
+      case 'citizen':
+      default:
+        return <CitizenDashboard />;
+    }
   };
 
+  // ✅ Page navigation
   const renderCurrentPage = () => {
     if (currentPage === 'gallery') return <Gallery />;
-    return renderDashboard(); // dashboard by default
+    return renderDashboard();
   };
 
   return (
@@ -109,7 +151,7 @@ function AppContent() {
       <Header />
       <main>{renderCurrentPage()}</main>
 
-      {/* Floating nav buttons */}
+      {/* Floating bottom navigation */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col space-y-3">
         <button
           onClick={() => setCurrentPage('dashboard')}
@@ -120,8 +162,18 @@ function AppContent() {
           }`}
           title="Dashboard"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2z" />
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+            />
           </svg>
         </button>
 
@@ -134,8 +186,18 @@ function AppContent() {
           }`}
           title="Gallery"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
           </svg>
         </button>
       </div>
