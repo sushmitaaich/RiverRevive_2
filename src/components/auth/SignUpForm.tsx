@@ -1,14 +1,16 @@
 'use client';
+
 import React, { useState } from 'react';
 import { Eye, EyeOff, User, Recycle, Shield } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface SignUpFormProps {
   onBack: () => void;
-  onSignUpSuccess: () => void;
+  onSignUpSuccess?: () => void;
 }
 
 export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps) {
+  /* ---------- form state ---------- */
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,14 +22,19 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
     organization: ''
   });
   const [showPw, setShowPw] = useState(false);
-  const [showConf, setShowConf] = useState(false);
+  const [showPwConf, setShowPwConf] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  /* NEW: success banner */
+  const [mailSent, setMailSent] = useState(false);
+
+  /* ---------- submit ---------- */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setMailSent(false);
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
@@ -41,7 +48,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
     }
 
     try {
-      /* 1️⃣  Create Auth user */
+      /* 1️⃣  CREATE AUTH USER FIRST (guarantees JWT) */
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -52,27 +59,26 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
             phone: formData.phone,
             location: formData.location,
             organization: formData.organization
-          },
-          emailRedirectTo: `${window.location.origin}/` // ← no 404
+          }
         }
       });
       if (signUpError) throw signUpError;
 
-      /* 2️⃣  Insert profile (JWT guaranteed) */
+      /* 2️⃣  INSERT PROFILE ONLY AFTER JWT EXISTS */
       const { error: profileError } = await supabase.from('profiles').insert({
         id: authData.user!.id,
         full_name: formData.name,
-        email: formData.email,
         role: formData.role,
-        phone_number: formData.phone,
+        phone: formData.phone,
         location: formData.location,
         organization: formData.organization,
-        status: 'pending',
         approved: false
       });
       if (profileError) throw profileError;
 
-      onSignUpSuccess();
+      /* 3️⃣  SUCCESS */
+      setMailSent(true);
+      onSignUpSuccess?.();
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     } finally {
@@ -80,6 +86,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
     }
   };
 
+  /* ---------- helpers ---------- */
   const roleIcon = (r: string) =>
     r === 'citizen' ? <User className="w-5 h-5" /> :
     r === 'collector' ? <Recycle className="w-5 h-5" /> :
@@ -90,6 +97,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
     r === 'collector' ? 'border-green-500 bg-green-50 text-green-700' :
     'border-purple-500 bg-purple-50 text-purple-700';
 
+  /* ---------- UI ---------- */
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center py-8">
       <div className="w-full max-w-2xl bg-white rounded-xl shadow-lg p-8">
@@ -101,8 +109,15 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
           <p className="text-gray-600 mt-2">Create your account to help clean our rivers</p>
         </div>
 
+        {/*  ✅  success banner  */}
+        {mailSent && (
+          <div className="mb-6 p-4 bg-green-50 text-green-800 rounded-lg border border-green-200">
+            ✅ Check your email to confirm your account.
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Role cards */}
+          {/*  role cards  */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Select Your Role</label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -127,7 +142,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
             </div>
           </div>
 
-          {/* Inputs */}
+          {/*  inputs  */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
@@ -178,7 +193,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
               <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
               <div className="relative">
                 <input
-                  type={showConf ? 'text' : 'password'}
+                  type={showPwConf ? 'text' : 'password'}
                   required
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
@@ -187,10 +202,10 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConf((s) => !s)}
+                  onClick={() => setShowPwConf((s) => !s)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 >
-                  {showConf ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPwConf ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
@@ -224,9 +239,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
           {(formData.role === 'collector' || formData.role === 'admin') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {formData.role === 'admin'
-                  ? 'Municipal Corporation/Department'
-                  : 'Organization/Company'}
+                {formData.role === 'admin' ? 'Municipal Corporation/Department' : 'Organization/Company'}
               </label>
               <input
                 type="text"
@@ -234,11 +247,7 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
                 value={formData.organization}
                 onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder={
-                  formData.role === 'admin'
-                    ? 'e.g., Delhi Municipal Corporation'
-                    : 'e.g., Green Clean Services'
-                }
+                placeholder={formData.role === 'admin' ? 'e.g., Delhi Municipal Corporation' : 'e.g., Green Clean Services'}
               />
             </div>
           )}

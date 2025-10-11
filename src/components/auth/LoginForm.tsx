@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface LoginFormProps {
@@ -12,91 +12,17 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
-
+    setError('');
+    
     try {
-      // 🧩 1️⃣ Login using Supabase Auth
-      const { data: signInData, error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-      if (signInError) {
-        console.error('Auth error:', signInError);
-        setError('Invalid email or password.');
-        setLoading(false);
-        return;
-      }
-
-      const user = signInData?.user;
-      if (!user) {
-        setError('Login failed. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      // 🧩 2️⃣ Fetch existing profile
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      // 🧩 3️⃣ If profile doesn’t exist, create one
-      if (fetchError || !existingProfile) {
-        const role = selectedRole || 'citizen';
-        const { error: insertError } = await supabase.from('profiles').insert([
-          {
-            id: user.id,
-            full_name: user.user_metadata?.full_name || '',
-            email: user.email,
-            role: role.toLowerCase(),
-            phone_number: '',
-            location: '',
-            organization: '',
-            status: 'approved', // ✅ automatically approved
-            approved: true,
-          },
-        ]);
-
-        if (insertError) {
-          console.error('Profile insert error:', insertError);
-          setError('Profile creation failed.');
-          setLoading(false);
-          return;
-        }
-
-        alert(`Welcome, ${role}! Your account is now active.`);
-        window.location.href = '/';
-        return;
-      }
-
-      // 🧩 4️⃣ If profile exists but is pending — auto-approve now
-      if (!existingProfile.approved || existingProfile.status !== 'approved') {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ approved: true, status: 'approved' })
-          .eq('id', user.id);
-
-        if (updateError) {
-          console.error('Auto-approve error:', updateError);
-          setError('Account approval failed.');
-          setLoading(false);
-          return;
-        }
-      }
-
-      // ✅ 5️⃣ Success — login complete
-      alert(`Welcome back, ${existingProfile.full_name || 'User'}!`);
-      window.location.href = '/'; // Let App.tsx load correct dashboard
+      await login(email, password);
     } catch (err) {
-      console.error('Login error:', err);
-      setError('Unexpected error. Please try again.');
+      setError('Invalid credentials. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -104,12 +30,17 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
 
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg">
-      <h2 className="text-2xl font-bold text-center mb-6">
-        Sign In to RiverRevive
-      </h2>
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-green-600 rounded-xl mx-auto mb-4 flex items-center justify-center">
+          <span className="text-white font-bold text-xl">RR</span>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900">Welcome to RiverRevive</h2>
+        <p className="text-gray-600 mt-2">
+          {selectedRole ? `Sign in as ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}` : 'Sign in to your account'}
+        </p>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Email */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Email Address
@@ -118,13 +49,12 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="Enter your email"
             required
           />
         </div>
 
-        {/* Password */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Password
@@ -134,7 +64,7 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 pr-12"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
               placeholder="Enter your password"
               required
             />
@@ -148,22 +78,35 @@ export default function LoginForm({ selectedRole }: LoginFormProps) {
           </div>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">
             {error}
           </div>
         )}
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 disabled:opacity-50"
+          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
         >
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
+
+      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+        <p className="text-sm text-gray-600 mb-2">Demo Credentials:</p>
+        <div className="space-y-1 text-xs">
+          <p className={selectedRole === 'citizen' ? 'font-bold text-blue-600' : ''}>
+            <strong>Citizen:</strong> citizen@riverrevive.gov / citizen123
+          </p>
+          <p className={selectedRole === 'collector' ? 'font-bold text-green-600' : ''}>
+            <strong>Collector:</strong> collector@riverrevive.gov / collector123
+          </p>
+          <p className={selectedRole === 'admin' ? 'font-bold text-purple-600' : ''}>
+            <strong>Admin:</strong> admin@riverrevive.gov / admin123
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
