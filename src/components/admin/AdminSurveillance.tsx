@@ -7,20 +7,20 @@ interface AdminSurveillanceProps {
 
 export default function AdminSurveillance({ onBack }: AdminSurveillanceProps) {
   const [selectedDate, setSelectedDate] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('yamuna-delhi');
+  const [selectedLocation, setSelectedLocation] = useState('ward-12');
   const [patrolStatus, setPatrolStatus] = useState('scheduled');
 
   const locations = [
-    { id: 'yamuna-delhi', name: 'Yamuna River, Delhi', status: 'active', lastPatrol: '2 hours ago' },
-    { id: 'ganges-varanasi', name: 'Ganges River, Varanasi', status: 'scheduled', lastPatrol: '6 hours ago' },
-    { id: 'sabarmati-ahmedabad', name: 'Sabarmati River, Ahmedabad', status: 'completed', lastPatrol: '1 day ago' },
-    { id: 'krishna-vijayawada', name: 'Krishna River, Vijayawada', status: 'active', lastPatrol: '4 hours ago' }
+    { id: 'ward-12', name: 'Industrial Ward 12, Delhi', status: 'active', lastPatrol: '2 hours ago' },
+    { id: 'market-b', name: 'Market Cluster B, Varanasi', status: 'scheduled', lastPatrol: '6 hours ago' },
+    { id: 'transfer-east', name: 'Transfer Station East, Ahmedabad', status: 'completed', lastPatrol: '1 day ago' },
+    { id: 'dump-zone', name: 'Peri-urban Dump Zone, Vijayawada', status: 'active', lastPatrol: '4 hours ago' }
   ];
 
   const patrolHistory = [
     {
       id: 1,
-      location: 'Yamuna River, Delhi',
+      location: 'Industrial Ward 12, Delhi',
       date: '2024-01-18',
       time: '14:30',
       status: 'completed',
@@ -29,7 +29,7 @@ export default function AdminSurveillance({ onBack }: AdminSurveillanceProps) {
     },
     {
       id: 2,
-      location: 'Ganges River, Varanasi',
+      location: 'Market Cluster B, Varanasi',
       date: '2024-01-18',
       time: '09:15',
       status: 'completed',
@@ -38,7 +38,7 @@ export default function AdminSurveillance({ onBack }: AdminSurveillanceProps) {
     },
     {
       id: 3,
-      location: 'Sabarmati River, Ahmedabad',
+      location: 'Transfer Station East, Ahmedabad',
       date: '2024-01-17',
       time: '16:45',
       status: 'completed',
@@ -162,7 +162,7 @@ export default function AdminSurveillance({ onBack }: AdminSurveillanceProps) {
                 <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
                 <span className="font-medium text-red-800">Drowning Risk Detected</span>
               </div>
-              <p className="text-sm text-red-700">Yamuna River, Delhi - Person in distress detected</p>
+              <p className="text-sm text-red-700">Industrial Ward 12, Delhi - Person in distress detected</p>
               <p className="text-xs text-red-600 mt-1">2 minutes ago</p>
               <button className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">
                 Dispatch Emergency
@@ -174,7 +174,7 @@ export default function AdminSurveillance({ onBack }: AdminSurveillanceProps) {
                 <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
                 <span className="font-medium text-yellow-800">Garbage Accumulation</span>
               </div>
-              <p className="text-sm text-yellow-700">Sabarmati River - Large waste deposit detected</p>
+              <p className="text-sm text-yellow-700">Transfer Station East - Large waste deposit detected</p>
               <p className="text-xs text-yellow-600 mt-1">15 minutes ago</p>
               <button className="mt-2 bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700">
                 Schedule Cleanup
@@ -186,7 +186,7 @@ export default function AdminSurveillance({ onBack }: AdminSurveillanceProps) {
                 <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
                 <span className="font-medium text-green-800">Area Clear</span>
               </div>
-              <p className="text-sm text-green-700">Krishna River - No issues detected</p>
+              <p className="text-sm text-green-700">Peri-urban Dump Zone - No issues detected</p>
               <p className="text-xs text-green-600 mt-1">1 hour ago</p>
             </div>
           </div>

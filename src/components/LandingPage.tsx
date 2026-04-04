@@ -51,7 +51,7 @@ export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps
             <p
                 className="text-blue-100 text-sm"
             >
-                Clean Rivers, Healthy Ecosystems
+                Cleaner Streets, Healthier Communities
             </p>
           </div>
           <button 
@@ -65,11 +65,11 @@ export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps
         {/* Hero Content */}
         <div className="relative z-10 text-center px-6 pt-16 pb-20">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Join the River Revival Movement
+            Join the Cleanup Movement
           </h2>
           <p className="text-blue-100 text-lg max-w-3xl mx-auto leading-relaxed">
-            Help detect, segregate and clean river waste through AI-powered technology. 
-            Connect with your community for a cleaner environment.
+            Help detect, verify, and clean land-based waste through AI-assisted reporting,
+            coordinated volunteers, and municipal action.
           </p>
         </div>
       </div>
@@ -143,7 +143,7 @@ export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps
           <div className="grid grid-cols-3 gap-8 max-w-md mx-auto">
             <div>
               <div className="text-3xl font-bold text-blue-600 mb-2">342</div>
-              <div className="text-sm text-gray-600">Rivers Cleaned</div>
+              <div className="text-sm text-gray-600">Zones Cleaned</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-green-600 mb-2">15.2K</div>
@@ -167,21 +167,21 @@ export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps
                 <span className="text-blue-600 font-bold text-xl">1</span>
               </div>
               <h4 className="font-semibold text-gray-900 mb-3 text-lg">Report</h4>
-              <p className="text-gray-600">Waste photos with locations are reported for cleaning</p>
+              <p className="text-gray-600">Waste photos with browser location are submitted for verification</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-green-600 font-bold text-xl">2</span>
               </div>
               <h4 className="font-semibold text-gray-900 mb-3 text-lg">Deploy</h4>
-              <p className="text-gray-600">AI-powered drones' detection and collection of waste</p>
+              <p className="text-gray-600">Municipal admins verify reports and schedule live cleanup events</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-purple-600 font-bold text-xl">3</span>
               </div>
               <h4 className="font-semibold text-gray-900 mb-3 text-lg">Clean</h4>
-              <p className="text-gray-600">Collectors' segregation and disposal of waste at recycling units</p>
+              <p className="text-gray-600">Collectors and volunteers complete the cleanup and earn points</p>
             </div>
           </div>
         </div>

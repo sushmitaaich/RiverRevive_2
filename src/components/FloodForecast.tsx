@@ -9,10 +9,10 @@ export default function FloodForecast({ onBack }: FloodForecastProps) {
   const [selectedLocation, setSelectedLocation] = useState('delhi');
 
   const locations = [
-    { id: 'delhi', name: 'Delhi - Yamuna River', risk: 'medium' },
-    { id: 'varanasi', name: 'Varanasi - Ganges River', risk: 'low' },
-    { id: 'ahmedabad', name: 'Ahmedabad - Sabarmati River', risk: 'high' },
-    { id: 'vijayawada', name: 'Vijayawada - Krishna River', risk: 'medium' }
+    { id: 'delhi', name: 'Delhi - Industrial Ward 12', risk: 'medium' },
+    { id: 'varanasi', name: 'Varanasi - Market Cluster B', risk: 'low' },
+    { id: 'ahmedabad', name: 'Ahmedabad - Transfer Station East', risk: 'high' },
+    { id: 'vijayawada', name: 'Vijayawada - Peri-urban Dump Zone', risk: 'medium' }
   ];
 
   const forecastData = {
@@ -21,7 +21,7 @@ export default function FloodForecast({ onBack }: FloodForecastProps) {
       warningLevel: 205.33,
       dangerLevel: 206.0,
       trend: 'rising',
-      prediction: 'Water level expected to rise by 0.3m in next 24 hours',
+      prediction: 'Heavy rainfall may disrupt access to cleanup routes over the next 24 hours',
       riskLevel: 'medium',
       lastUpdated: '2024-01-18 14:30'
     },
@@ -30,7 +30,7 @@ export default function FloodForecast({ onBack }: FloodForecastProps) {
       warningLevel: 60.0,
       dangerLevel: 61.5,
       trend: 'stable',
-      prediction: 'Water level stable, no significant change expected',
+      prediction: 'Weather conditions remain stable for scheduled cleanup operations',
       riskLevel: 'low',
       lastUpdated: '2024-01-18 14:25'
     },
@@ -39,7 +39,7 @@ export default function FloodForecast({ onBack }: FloodForecastProps) {
       warningLevel: 88.0,
       dangerLevel: 89.5,
       trend: 'rising',
-      prediction: 'Critical: Water level approaching warning threshold',
+      prediction: 'Critical: flooding may affect access roads near the waste hotspot',
       riskLevel: 'high',
       lastUpdated: '2024-01-18 14:35'
     },
@@ -48,7 +48,7 @@ export default function FloodForecast({ onBack }: FloodForecastProps) {
       warningLevel: 14.0,
       dangerLevel: 15.5,
       trend: 'falling',
-      prediction: 'Water level decreasing, flood risk reducing',
+      prediction: 'Flood risk is easing and transport access is improving',
       riskLevel: 'medium',
       lastUpdated: '2024-01-18 14:20'
     }
@@ -84,8 +84,8 @@ export default function FloodForecast({ onBack }: FloodForecastProps) {
           <ArrowLeft size={20} className="mr-2" />
           Back to Dashboard
         </button>
-        <h1 className="text-3xl font-bold text-gray-900">Flood Forecast & Water Level Monitoring</h1>
-        <p className="text-gray-600 mt-2">AI-based forecasting models integrated with weather and hydrological data</p>
+        <h1 className="text-3xl font-bold text-gray-900">Flood Forecast & Route Risk Monitoring</h1>
+        <p className="text-gray-600 mt-2">AI-assisted forecasting for weather disruption around land cleanup zones</p>
       </div>
 
       {/* Location Selector */}
@@ -118,7 +118,7 @@ export default function FloodForecast({ onBack }: FloodForecastProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-gray-900">Current Water Level</h3>
+            <h3 className="text-lg font-bold text-gray-900">Current Flood Metric</h3>
             {getTrendIcon(currentData.trend)}
           </div>
           <div className="text-3xl font-bold text-blue-600 mb-2">{currentData.currentLevel}m</div>
@@ -128,7 +128,7 @@ export default function FloodForecast({ onBack }: FloodForecastProps) {
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex items-center mb-4">
             <AlertTriangle className="w-6 h-6 text-yellow-500 mr-2" />
-            <h3 className="text-lg font-bold text-gray-900">Warning Level</h3>
+            <h3 className="text-lg font-bold text-gray-900">Warning Threshold</h3>
           </div>
           <div className="text-3xl font-bold text-yellow-600 mb-2">{currentData.warningLevel}m</div>
           <p className="text-sm text-gray-600">Danger Level: {currentData.dangerLevel}m</p>
@@ -137,7 +137,7 @@ export default function FloodForecast({ onBack }: FloodForecastProps) {
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex items-center mb-4">
             <Droplets className="w-6 h-6 text-red-500 mr-2" />
-            <h3 className="text-lg font-bold text-gray-900">Flood Risk</h3>
+            <h3 className="text-lg font-bold text-gray-900">Site Risk</h3>
           </div>
           <div className={`text-3xl font-bold mb-2 ${
             currentData.riskLevel === 'high' ? 'text-red-600' :
@@ -152,7 +152,7 @@ export default function FloodForecast({ onBack }: FloodForecastProps) {
       {/* Prediction & Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">24-Hour Prediction</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-4">24-Hour Site Outlook</h3>
           <div className={`p-4 rounded-lg mb-4 ${
             currentData.riskLevel === 'high' ? 'bg-red-50 border border-red-200' :
             currentData.riskLevel === 'medium' ? 'bg-yellow-50 border border-yellow-200' :

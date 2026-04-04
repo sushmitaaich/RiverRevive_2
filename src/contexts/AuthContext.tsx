@@ -1,91 +1,138 @@
-// src/contexts/AuthContext.tsx
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '../types/index';
-import { supabase } from '../lib/supabase'; // <-- 1. helper we created earlier
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { supabase } from '../lib/supabase';
+import { fetchCurrentUserProfile } from '../lib/cleanup';
+import type { User } from '../types';
 
-/* ------------------------------------------------------------------ */
-/*  TYPE DEFINITIONS                                                  */
-/* ------------------------------------------------------------------ */
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (userData: Partial<User>, password: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/* ------------------------------------------------------------------ */
-/*  HELPER – map Supabase user → our User type                        */
-/* ------------------------------------------------------------------ */
-function toUser(supabaseUser: any): User {
+function toFallbackUser(supabaseUser: any): User {
   return {
     id: supabaseUser.id,
-    email: supabaseUser.email!,
-    name: supabaseUser.user_metadata?.full_name || '',
-    role: supabaseUser.user_metadata?.role || 'citizen',
-    points: supabaseUser.user_metadata?.points || 0,
-    location: supabaseUser.user_metadata?.location || '',
+    email: supabaseUser.email ?? '',
+    name: supabaseUser.user_metadata?.full_name ?? '',
+    role: supabaseUser.user_metadata?.role ?? 'citizen',
+    points: supabaseUser.user_metadata?.points ?? 0,
+    location: supabaseUser.user_metadata?.location ?? '',
+    phone: supabaseUser.user_metadata?.phone_number ?? '',
+    organization: supabaseUser.user_metadata?.organization ?? '',
+    approved: supabaseUser.user_metadata?.approved ?? false,
+    status: supabaseUser.user_metadata?.status ?? 'pending_approval',
   };
 }
 
-/* ------------------------------------------------------------------ */
-/*  PROVIDER                                                          */
-/* ------------------------------------------------------------------ */
+async function resolveAppUser(supabaseUser: any) {
+  const profile = await fetchCurrentUserProfile(supabaseUser.id);
+  return profile ?? toFallbackUser(supabaseUser);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  /* ----------  LOGIN  ------------------------------------------- */
-  const login = async (email: string, password: string): Promise<void> => {
-    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
-    setUser(toUser(data.user));
+  const refreshUser = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.user) {
+      setUser(null);
+      return;
+    }
+
+    const appUser = await resolveAppUser(session.user);
+    setUser(appUser);
   };
 
-  /* ----------  LOGOUT  ------------------------------------------ */
-  const logout = async (): Promise<void> => {
+  const login = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (data.user) {
+      const appUser = await resolveAppUser(data.user);
+      setUser(appUser);
+    }
+  };
+
+  const logout = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) throw new Error(error.message);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
     setUser(null);
   };
 
-  /* ----------  REGISTER  ---------------------------------------- */
-  const register = async (userData: Partial<User>, password: string): Promise<void> => {
+  const register = async (userData: Partial<User>, password: string) => {
     const { error, data } = await supabase.auth.signUp({
-      email: userData.email!,
+      email: userData.email ?? '',
       password,
-      options: { data: userData }, // -> raw_user_meta_data
+      options: {
+        data: {
+          full_name: userData.name ?? '',
+          role: userData.role ?? 'citizen',
+          location: userData.location ?? '',
+          phone_number: userData.phone ?? '',
+          organization: userData.organization ?? '',
+          points: 0,
+        },
+      },
     });
-    if (error) throw new Error(error.message);
-    // data.user can be null if e-mail confirmation is ON
-    if (data.user) setUser(toUser(data.user));
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (data.user) {
+      const appUser = await resolveAppUser(data.user);
+      setUser(appUser);
+    }
   };
 
-  /* ----------  LISTEN TO AUTH CHANGES  -------------------------- */
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ? toUser(session.user) : null);
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        setUser(null);
+        return;
+      }
+
+      void resolveAppUser(session.user).then(setUser).catch(() => {
+        setUser(toFallbackUser(session.user));
+      });
     });
-    return () => sub.subscription.unsubscribe();
+
+    return () => {
+      subscription.subscription.unsubscribe();
+    };
   }, []);
 
-  /* ----------  INITIAL LOAD  ----------------------------------- */
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      setUser(data.session?.user ? toUser(data.session.user) : null);
-    })();
+    void refreshUser();
   }, []);
 
-  /* ----------  RENDER  ----------------------------------------- */
-  return <AuthContext.Provider value={{ user, login, logout, register }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, login, logout, register, refreshUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-/* ------------------------------------------------------------------ */
-/*  HOOK                                                              */
-/* ------------------------------------------------------------------ */
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+
   return context;
 }

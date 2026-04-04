@@ -11,10 +11,10 @@ export default function AdminFloodForecast({ onBack }: AdminFloodForecastProps) 
   const [showAlertForm, setShowAlertForm] = useState(false);
 
   const locations = [
-    { id: 'delhi', name: 'Delhi - Yamuna River', risk: 'high', currentLevel: 205.8, warningLevel: 205.33, dangerLevel: 206.0 },
-    { id: 'varanasi', name: 'Varanasi - Ganges River', risk: 'low', currentLevel: 58.2, warningLevel: 60.0, dangerLevel: 61.5 },
-    { id: 'ahmedabad', name: 'Ahmedabad - Sabarmati River', risk: 'high', currentLevel: 87.9, warningLevel: 88.0, dangerLevel: 89.5 },
-    { id: 'vijayawada', name: 'Vijayawada - Krishna River', risk: 'medium', currentLevel: 12.4, warningLevel: 14.0, dangerLevel: 15.5 }
+    { id: 'delhi', name: 'Delhi - Industrial Ward 12', risk: 'high', currentLevel: 205.8, warningLevel: 205.33, dangerLevel: 206.0 },
+    { id: 'varanasi', name: 'Varanasi - Market Cluster B', risk: 'low', currentLevel: 58.2, warningLevel: 60.0, dangerLevel: 61.5 },
+    { id: 'ahmedabad', name: 'Ahmedabad - Transfer Station East', risk: 'high', currentLevel: 87.9, warningLevel: 88.0, dangerLevel: 89.5 },
+    { id: 'vijayawada', name: 'Vijayawada - Peri-urban Dump Zone', risk: 'medium', currentLevel: 12.4, warningLevel: 14.0, dangerLevel: 15.5 }
   ];
 
   const currentData = locations.find(loc => loc.id === selectedLocation) || locations[0];
@@ -47,7 +47,7 @@ export default function AdminFloodForecast({ onBack }: AdminFloodForecastProps) 
           Back to Dashboard
         </button>
         <h1 className="text-3xl font-bold text-gray-900">Admin Flood Forecast Control</h1>
-        <p className="text-gray-600 mt-2">Monitor water levels and send alerts to all app users</p>
+        <p className="text-gray-600 mt-2">Monitor site access risk and send alerts to all app users</p>
       </div>
 
       {/* Alert Control Panel */}
@@ -151,7 +151,7 @@ export default function AdminFloodForecast({ onBack }: AdminFloodForecastProps) 
           <h3 className="text-lg font-bold text-gray-900 mb-4">Monitoring Controls</h3>
           <div className="space-y-3">
             <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
-              Update Water Level
+              Update Risk Metric
             </button>
             <button className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
               Schedule Monitoring
@@ -169,8 +169,8 @@ export default function AdminFloodForecast({ onBack }: AdminFloodForecastProps) 
           <h3 className="text-lg font-bold text-gray-900 mb-4">Alert History</h3>
           <div className="space-y-3">
             <div className="p-3 bg-red-50 rounded-lg">
-              <p className="text-sm font-medium text-red-800">High Water Level Alert</p>
-              <p className="text-xs text-red-600">Yamuna River - 2 hours ago</p>
+              <p className="text-sm font-medium text-red-800">High Flood Risk Alert</p>
+              <p className="text-xs text-red-600">Industrial Ward 12 - 2 hours ago</p>
             </div>
             <div className="p-3 bg-yellow-50 rounded-lg">
               <p className="text-sm font-medium text-yellow-800">Weather Warning</p>
