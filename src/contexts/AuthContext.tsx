@@ -29,8 +29,12 @@ function toFallbackUser(supabaseUser: any): User {
 }
 
 async function resolveAppUser(supabaseUser: any) {
-  const profile = await fetchCurrentUserProfile(supabaseUser.id);
-  return profile ?? toFallbackUser(supabaseUser);
+  try {
+    const profile = await fetchCurrentUserProfile(supabaseUser.id);
+    return profile ?? toFallbackUser(supabaseUser);
+  } catch {
+    return toFallbackUser(supabaseUser);
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -57,8 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(error.message);
     }
 
-    if (data.user) {
-      const appUser = await resolveAppUser(data.user);
+    if (data.session?.user) {
+      const appUser = await resolveAppUser(data.session.user);
       setUser(appUser);
     }
   };
@@ -93,8 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(error.message);
     }
 
-    if (data.user) {
-      const appUser = await resolveAppUser(data.user);
+    if (data.session?.user) {
+      const appUser = await resolveAppUser(data.session.user);
       setUser(appUser);
     }
   };

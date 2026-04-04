@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Eye, EyeOff, Recycle, Shield, User } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SignUpFormProps {
   onBack: () => void;
@@ -10,6 +10,7 @@ interface SignUpFormProps {
 }
 
 export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps) {
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -45,41 +46,17 @@ export default function SignUpForm({ onBack, onSignUpSuccess }: SignUpFormProps)
     }
 
     try {
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.name,
-            role: formData.role,
-            phone_number: formData.phone,
-            location: formData.location,
-            organization: formData.organization,
-          },
-        },
-      });
-
-      if (signUpError) throw signUpError;
-
-      const { error: profileError } = await supabase.from('profiles').upsert(
+      await register(
         {
-          id: authData.user!.id,
-          full_name: formData.name,
+          name: formData.name,
+          email: formData.email,
           role: formData.role,
-          phone_number: formData.phone,
+          phone: formData.phone,
           location: formData.location,
           organization: formData.organization,
-          email: formData.email,
-          approved: false,
-          status: 'pending_approval',
-          points: 0,
         },
-        {
-          onConflict: 'id',
-        },
+        formData.password,
       );
-
-      if (profileError) throw profileError;
 
       setMailSent(true);
       onSignUpSuccess?.();
