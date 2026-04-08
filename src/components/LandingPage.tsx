@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Recycle, Shield, ChevronRight } from 'lucide-react';
+import { User, Recycle, Shield, ChevronRight, Brain, MapPinned, Gauge, LayoutDashboard } from 'lucide-react';
 //import bgImage from '../assets/Drone_background_home.jpg';
 
 interface LandingPageProps {
@@ -9,6 +9,37 @@ interface LandingPageProps {
 
 export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps) {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
+
+  const futureDirections = [
+    {
+      title: 'Backend ML Integration',
+      description:
+        'A garbage-detection model can be deployed in the backend so each eligible report is automatically screened after submission.',
+      icon: Brain,
+      accent: 'bg-cyan-100 text-cyan-700',
+    },
+    {
+      title: 'Two-Step Report Verification',
+      description:
+        'After the browser location and photo metadata are matched, the uploaded image can be checked to confirm whether garbage is actually present and how intense the dump is.',
+      icon: MapPinned,
+      accent: 'bg-emerald-100 text-emerald-700',
+    },
+    {
+      title: 'Type And Priority Prediction',
+      description:
+        'If waste is detected, the model can estimate the garbage type and intensity so the system can assign a response priority level automatically.',
+      icon: Gauge,
+      accent: 'bg-amber-100 text-amber-700',
+    },
+    {
+      title: 'Verified Reports For Admins',
+      description:
+        'Reports that pass verification can be forwarded to the municipal admin dashboard along with location details and assigned priority for faster action.',
+      icon: LayoutDashboard,
+      accent: 'bg-violet-100 text-violet-700',
+    },
+  ];
 
   const handleRoleClick = (role: 'citizen' | 'collector' | 'admin') => {
     setSelectedRole(role);
@@ -183,6 +214,39 @@ export default function LandingPage({ onRoleSelect, onSignUp }: LandingPageProps
               <h4 className="font-semibold text-gray-900 mb-3 text-lg">Clean</h4>
               <p className="text-gray-600">Collectors and volunteers complete the cleanup and earn points</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 py-16">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="max-w-3xl mx-auto text-center mb-12">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
+              Future Directions
+            </p>
+            <h3 className="text-3xl md:text-4xl font-bold text-white mt-3">
+              The next phase is an AI-assisted verification pipeline
+            </h3>
+            <p className="text-slate-300 mt-4 leading-relaxed">
+              After the webpage is fully implemented, RiverRevive can evolve from location-based
+              reporting into an intelligent screening system that verifies, prioritizes, and routes
+              valid garbage reports to municipal admins.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {futureDirections.map(({ title, description, icon: Icon, accent }) => (
+              <div
+                key={title}
+                className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
+              >
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${accent}`}>
+                  <Icon className="w-7 h-7" />
+                </div>
+                <h4 className="text-xl font-semibold text-white mt-5">{title}</h4>
+                <p className="text-slate-300 mt-3 leading-relaxed">{description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

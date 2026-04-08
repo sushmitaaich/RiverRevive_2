@@ -7,6 +7,10 @@ import ViewEvents from '../ViewEvents';
 import FloodForecast from '../FloodForecast';
 import type { CleaningEvent, GarbageReport } from '../../types';
 
+function resolveEventImage(event: CleaningEvent) {
+  return event.beforeUrl || event.report?.mlAnnotatedImageUrl || event.report?.images[0] || '';
+}
+
 export default function CitizenDashboard() {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<'dashboard' | 'report-waste' | 'view-events' | 'flood-forecast'>('dashboard');
@@ -206,11 +210,21 @@ export default function CitizenDashboard() {
                 .slice(0, 4)
                 .map((event) => (
                   <div key={event.id} className="rounded-2xl border border-slate-200 p-4">
+                    {resolveEventImage(event) ? (
+                      <img
+                        src={resolveEventImage(event)}
+                        alt={`Cleanup event for ${event.report?.address || 'reported site'}`}
+                        className="w-full h-40 object-cover rounded-2xl border border-slate-200 mb-4"
+                      />
+                    ) : null}
                     <p className="font-medium text-slate-900">
                       {event.report?.address || 'Cleanup event'}
                     </p>
                     <p className="text-sm text-slate-500 mt-1">
                       {new Date(event.scheduledAt).toLocaleString()}
+                    </p>
+                    <p className="text-sm text-slate-600 mt-2">
+                      {event.location || event.report?.address || 'Location pending'}
                     </p>
                     <p className="text-sm text-slate-600 mt-2">
                       {event.volunteerCount}/{event.requiredVolunteers} volunteers registered

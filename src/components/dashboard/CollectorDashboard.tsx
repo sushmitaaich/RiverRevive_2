@@ -13,6 +13,10 @@ import ViewEvents from '../ViewEvents';
 import FloodForecast from '../FloodForecast';
 import type { CleaningEvent, GarbageReport } from '../../types';
 
+function resolveEventImage(event: CleaningEvent) {
+  return event.beforeUrl || event.report?.mlAnnotatedImageUrl || event.report?.images[0] || '';
+}
+
 export default function CollectorDashboard() {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<'dashboard' | 'report-waste' | 'view-events' | 'flood-forecast'>('dashboard');
@@ -218,6 +222,13 @@ export default function CollectorDashboard() {
 
                 return (
                   <div key={event.id} className="rounded-2xl border border-slate-200 p-4">
+                    {resolveEventImage(event) ? (
+                      <img
+                        src={resolveEventImage(event)}
+                        alt={`Cleanup event for ${event.report?.address || 'reported site'}`}
+                        className="w-full h-40 object-cover rounded-2xl border border-slate-200 mb-4"
+                      />
+                    ) : null}
                     <div className="flex justify-between items-start gap-4 mb-3">
                       <div>
                         <p className="font-medium text-slate-900">
@@ -225,6 +236,9 @@ export default function CollectorDashboard() {
                         </p>
                         <p className="text-sm text-slate-500 mt-1">
                           {new Date(event.scheduledAt).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-slate-600 mt-2">
+                          {event.location || event.report?.address || 'Location pending'}
                         </p>
                         <p className="text-sm text-slate-500">
                           {event.volunteerCount}/{event.requiredVolunteers} volunteers registered

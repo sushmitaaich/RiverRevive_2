@@ -3,10 +3,13 @@ import { distanceInMeters, extractImageGps } from './exif';
 import type {
   CleaningEvent,
   Coordinates,
+  DetectionBoundingBox,
   EventVolunteer,
   GarbageReport,
   MetadataStatus,
+  MlStatus,
   PointTransaction,
+  PriorityLevel,
   ReportStatus,
   ReportSubmissionResult,
   User,
@@ -21,6 +24,15 @@ function toNumber(value: unknown) {
   if (typeof value === 'string' && value.trim()) {
     const parsed = Number(value);
     return Number.isNaN(parsed) ? null : parsed;
+  }
+  return null;
+}
+
+function toBoolean(value: unknown) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
   }
   return null;
 }
@@ -50,6 +62,62 @@ function toObject(value: unknown) {
   }
 
   return {};
+}
+
+function toDetectionArray(value: unknown): DetectionBoundingBox[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      return [];
+    }
+
+    const record = item as Record<string, unknown>;
+    const className =
+      typeof record.class_name === 'string'
+        ? record.class_name
+        : typeof record.className === 'string'
+          ? record.className
+          : null;
+    const confidence = toNumber(record.confidence);
+    const x1 = toNumber(record.x1);
+    const y1 = toNumber(record.y1);
+    const x2 = toNumber(record.x2);
+    const y2 = toNumber(record.y2);
+    const width = toNumber(record.width);
+    const height = toNumber(record.height);
+    const areaRatio = toNumber(record.area_ratio ?? record.areaRatio);
+
+    if (
+      !className ||
+      confidence == null ||
+      x1 == null ||
+      y1 == null ||
+      x2 == null ||
+      y2 == null ||
+      width == null ||
+      height == null ||
+      areaRatio == null
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        className,
+        confidence,
+        x1,
+        y1,
+        x2,
+        y2,
+        width,
+        height,
+        areaRatio,
+      },
+    ];
+  });
 }
 
 function mapProfileRow(row: any): User {
@@ -87,6 +155,19 @@ function mapReportRow(row: any, profilesById: Record<string, User>): GarbageRepo
     verificationNotes: row.verification_notes ?? null,
     reportedLocation: toCoordinates(row.reported_latitude, row.reported_longitude),
     metadataLocation: toCoordinates(row.metadata_latitude, row.metadata_longitude),
+    priorityLevel: (row.priority_level ?? null) as PriorityLevel | null,
+    priorityScore: toNumber(row.priority_score),
+    mlStatus: (row.ml_status ?? 'pending') as MlStatus,
+    mlDetected: toBoolean(row.ml_detected),
+    mlCoverageRatio: toNumber(row.ml_total_coverage),
+    mlDetectionCount: toNumber(row.ml_box_count),
+    mlConfidence: toNumber(row.ml_confidence),
+    mlDetectedTypes: toStringArray(row.ml_detected_types),
+    mlDetections: toDetectionArray(row.ml_detections),
+    mlModelVersion: row.ml_model_version ?? null,
+    mlProcessedAt: row.ml_processed_at ?? null,
+    mlNotes: row.ml_notes ?? null,
+    mlAnnotatedImageUrl: row.ml_annotated_image_url ?? null,
     cleanupEventId: row.cleanup_event_id ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at ?? undefined,
@@ -145,6 +226,15 @@ async function fetchProfilesByIds(profileIds: string[]) {
   }, {});
 }
 
+async function fetchProfilesByIdsSafe(profileIds: string[]) {
+  try {
+    return await fetchProfilesByIds(profileIds);
+  } catch (error) {
+    console.warn('Falling back to report rows without profile enrichment:', error);
+    return {} as Record<string, User>;
+  }
+}
+
 async function fetchReportsByIds(reportIds: string[]) {
   const uniqueIds = [...new Set(reportIds)].filter(Boolean);
 
@@ -163,7 +253,7 @@ async function fetchReportsByIds(reportIds: string[]) {
   }
 
   const reporterIds = (data ?? []).map((row) => row.reporter_id);
-  const profilesById = await fetchProfilesByIds(reporterIds);
+  const profilesById = await fetchProfilesByIdsSafe(reporterIds);
 
   return (data ?? []).map((row) => mapReportRow(row, profilesById));
 }
@@ -213,7 +303,7 @@ export async function fetchAllReports() {
     throw error;
   }
 
-  const profilesById = await fetchProfilesByIds((data ?? []).map((row) => row.reporter_id));
+  const profilesById = await fetchProfilesByIdsSafe((data ?? []).map((row) => row.reporter_id));
 
   return (data ?? []).map((row) => mapReportRow(row, profilesById));
 }
@@ -275,6 +365,7 @@ export async function fetchCleanupEvents() {
       scheduledAt: row.scheduled_at,
       status: row.status ?? 'upcoming',
       requiredVolunteers: row.required_volunteers ?? 0,
+      location: row.event_location ?? row.location ?? null,
       eventNotes: row.event_notes ?? null,
       completionNotes: row.completion_notes ?? null,
       beforeUrl: row.before_url ?? null,
@@ -335,6 +426,20 @@ export function subscribeToCleanupUpdates(onChange: () => void) {
   return () => {
     void supabase.removeChannel(channel);
   };
+}
+
+async function requestBackendReportVerification(reportId: string) {
+  if (import.meta.env.VITE_ENABLE_BACKEND_REPORT_VERIFICATION !== 'true') {
+    return;
+  }
+
+  const { error } = await supabase.functions.invoke('verify-report', {
+    body: { reportId },
+  });
+
+  if (error) {
+    console.error('Background report verification failed:', error);
+  }
 }
 
 export async function submitWasteReport({
@@ -413,6 +518,7 @@ export async function submitWasteReport({
 
   const reporter = await fetchCurrentUserProfile(reporterId);
   const report = mapReportRow(data, reporter ? { [reporter.id]: reporter } : {});
+  void requestBackendReportVerification(data.id);
 
   return {
     report,
@@ -423,12 +529,14 @@ export async function submitWasteReport({
 export async function scheduleCleanupEvent({
   reportId,
   scheduledAt,
+  location,
   requiredVolunteers,
   eventNotes,
   createdBy,
 }: {
   reportId: string;
   scheduledAt: string;
+  location: string;
   requiredVolunteers: number;
   eventNotes: string;
   createdBy: string;
@@ -436,6 +544,7 @@ export async function scheduleCleanupEvent({
   const { data, error } = await supabase.rpc('schedule_cleanup_event', {
     p_report_id: reportId,
     p_scheduled_at: scheduledAt,
+    p_event_location: location,
     p_required_volunteers: requiredVolunteers,
     p_event_notes: eventNotes,
     p_created_by: createdBy,

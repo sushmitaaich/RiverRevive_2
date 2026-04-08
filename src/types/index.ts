@@ -1,9 +1,11 @@
 export type UserRole = 'citizen' | 'collector' | 'admin';
 export type ReportStatus = 'pending' | 'rejected' | 'scheduled' | 'ongoing' | 'completed';
 export type MetadataStatus = 'pending' | 'verified' | 'rejected';
+export type MlStatus = 'pending' | 'verified' | 'rejected';
 export type EventStatus = 'upcoming' | 'ongoing' | 'completed';
 export type VolunteerSource = 'self' | 'manual';
 export type VolunteerStatus = 'registered' | 'assigned' | 'completed' | 'cancelled';
+export type PriorityLevel = 'low' | 'medium' | 'high' | 'critical';
 export type PointTransactionType =
   | 'report_completion'
   | 'event_participation'
@@ -12,6 +14,18 @@ export type PointTransactionType =
 export interface Coordinates {
   lat: number;
   lng: number;
+}
+
+export interface DetectionBoundingBox {
+  className: string;
+  confidence: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  width: number;
+  height: number;
+  areaRatio: number;
 }
 
 export interface User {
@@ -45,6 +59,19 @@ export interface GarbageReport {
   verificationNotes: string | null;
   reportedLocation: Coordinates | null;
   metadataLocation: Coordinates | null;
+  priorityLevel?: PriorityLevel | null;
+  priorityScore?: number | null;
+  mlStatus?: MlStatus;
+  mlDetected?: boolean | null;
+  mlCoverageRatio?: number | null;
+  mlDetectionCount?: number | null;
+  mlConfidence?: number | null;
+  mlDetectedTypes?: string[];
+  mlDetections?: DetectionBoundingBox[];
+  mlModelVersion?: string | null;
+  mlProcessedAt?: string | null;
+  mlNotes?: string | null;
+  mlAnnotatedImageUrl?: string | null;
   cleanupEventId: string | null;
   createdAt: string;
   updatedAt?: string;
@@ -68,6 +95,7 @@ export interface CleaningEvent {
   scheduledAt: string;
   status: EventStatus;
   requiredVolunteers: number;
+  location: string | null;
   eventNotes: string | null;
   completionNotes: string | null;
   beforeUrl: string | null;

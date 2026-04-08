@@ -4,12 +4,60 @@ insert into storage.buckets (id, name, public)
 values ('waste-report-images', 'waste-report-images', true)
 on conflict (id) do nothing;
 
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.profiles
+    where id = auth.uid()
+      and role = 'admin'
+      and approved = true
+  );
+$$;
+
 alter table public.profiles
+  add column if not exists email text,
+  add column if not exists full_name text,
+  add column if not exists role text not null default 'citizen',
+  add column if not exists location text,
+  add column if not exists organization text,
+  add column if not exists approved boolean not null default false,
+  add column if not exists status text not null default 'pending_approval',
+  add column if not exists points integer not null default 0,
+  add column if not exists phone_number text,
   add column if not exists updated_at timestamptz not null default now();
 
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'profiles'
+      and column_name = 'phone'
+  ) then
+    update public.profiles
+    set phone_number = coalesce(phone_number, phone)
+    where phone_number is null
+      and phone is not null;
+  end if;
+end $$;
+
 update public.profiles
-set points = coalesce(points, 0)
-where points is null;
+set
+  role = coalesce(role, 'citizen'),
+  approved = coalesce(approved, false),
+  status = coalesce(status, 'pending_approval'),
+  points = coalesce(points, 0)
+where role is null
+   or approved is null
+   or status is null
+   or points is null;
 
 alter table public.profiles
   alter column points set default 0;
@@ -24,7 +72,20 @@ alter table public.garbage_reports
   add column if not exists metadata_status text not null default 'pending',
   add column if not exists verification_notes text,
   add column if not exists cleanup_event_id uuid,
-  add column if not exists updated_at timestamptz not null default now();
+  add column if not exists updated_at timestamptz not null default now(),
+  add column if not exists priority_level text,
+  add column if not exists priority_score integer,
+  add column if not exists ml_status text not null default 'pending',
+  add column if not exists ml_detected boolean,
+  add column if not exists ml_total_coverage double precision,
+  add column if not exists ml_box_count integer,
+  add column if not exists ml_confidence double precision,
+  add column if not exists ml_detected_types text[] not null default '{}'::text[],
+  add column if not exists ml_detections jsonb not null default '[]'::jsonb,
+  add column if not exists ml_model_version text,
+  add column if not exists ml_processed_at timestamptz,
+  add column if not exists ml_notes text,
+  add column if not exists ml_annotated_image_url text;
 
 update public.garbage_reports
 set status = 'pending'
@@ -114,6 +175,12 @@ create index if not exists idx_garbage_reports_reporter_id
 
 create index if not exists idx_garbage_reports_status
   on public.garbage_reports (status);
+
+create index if not exists idx_garbage_reports_ml_status
+  on public.garbage_reports (ml_status);
+
+create index if not exists idx_garbage_reports_priority_level
+  on public.garbage_reports (priority_level);
 
 create index if not exists idx_cleaning_events_status
   on public.cleaning_events (status);
@@ -331,6 +398,123 @@ begin
   return p_event_id;
 end;
 $$;
+
+alter table public.profiles enable row level security;
+alter table public.garbage_reports enable row level security;
+alter table public.cleaning_events enable row level security;
+alter table public.event_volunteers enable row level security;
+alter table public.points_ledger enable row level security;
+
+drop policy if exists "profiles_select_own" on public.profiles;
+create policy "profiles_select_own"
+on public.profiles
+for select
+to authenticated
+using (auth.uid() = id);
+
+drop policy if exists "profiles_update_own" on public.profiles;
+create policy "profiles_update_own"
+on public.profiles
+for update
+to authenticated
+using (auth.uid() = id)
+with check (auth.uid() = id);
+
+drop policy if exists "profiles_admin_all" on public.profiles;
+create policy "profiles_admin_all"
+on public.profiles
+for all
+to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+drop policy if exists "garbage_reports_select_own_or_admin" on public.garbage_reports;
+create policy "garbage_reports_select_own_or_admin"
+on public.garbage_reports
+for select
+to authenticated
+using (auth.uid() = reporter_id or public.is_admin());
+
+drop policy if exists "garbage_reports_insert_own" on public.garbage_reports;
+create policy "garbage_reports_insert_own"
+on public.garbage_reports
+for insert
+to authenticated
+with check (auth.uid() = reporter_id);
+
+drop policy if exists "garbage_reports_update_admin" on public.garbage_reports;
+create policy "garbage_reports_update_admin"
+on public.garbage_reports
+for update
+to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+drop policy if exists "cleaning_events_select_authenticated" on public.cleaning_events;
+create policy "cleaning_events_select_authenticated"
+on public.cleaning_events
+for select
+to authenticated
+using (true);
+
+drop policy if exists "cleaning_events_admin_all" on public.cleaning_events;
+create policy "cleaning_events_admin_all"
+on public.cleaning_events
+for all
+to authenticated
+using (public.is_admin())
+with check (public.is_admin());
+
+drop policy if exists "event_volunteers_select_authenticated" on public.event_volunteers;
+create policy "event_volunteers_select_authenticated"
+on public.event_volunteers
+for select
+to authenticated
+using (true);
+
+drop policy if exists "event_volunteers_insert_self_or_admin" on public.event_volunteers;
+create policy "event_volunteers_insert_self_or_admin"
+on public.event_volunteers
+for insert
+to authenticated
+with check (
+  public.is_admin()
+  or collector_id = auth.uid()
+);
+
+drop policy if exists "event_volunteers_update_self_or_admin" on public.event_volunteers;
+create policy "event_volunteers_update_self_or_admin"
+on public.event_volunteers
+for update
+to authenticated
+using (
+  public.is_admin()
+  or collector_id = auth.uid()
+)
+with check (
+  public.is_admin()
+  or collector_id = auth.uid()
+);
+
+drop policy if exists "event_volunteers_delete_self_or_admin" on public.event_volunteers;
+create policy "event_volunteers_delete_self_or_admin"
+on public.event_volunteers
+for delete
+to authenticated
+using (
+  public.is_admin()
+  or collector_id = auth.uid()
+);
+
+drop policy if exists "points_ledger_select_own_or_admin" on public.points_ledger;
+create policy "points_ledger_select_own_or_admin"
+on public.points_ledger
+for select
+to authenticated
+using (
+  public.is_admin()
+  or profile_id = auth.uid()
+);
 
 do $$
 begin

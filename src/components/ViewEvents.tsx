@@ -27,6 +27,10 @@ function statusClasses(status: string) {
   }
 }
 
+function resolveEventImage(event: CleaningEvent) {
+  return event.beforeUrl || event.report?.mlAnnotatedImageUrl || event.report?.images[0] || '';
+}
+
 export default function ViewEvents({ onBack }: ViewEventsProps) {
   const { user } = useAuth();
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'ongoing' | 'completed'>('all');
@@ -148,6 +152,13 @@ export default function ViewEvents({ onBack }: ViewEventsProps) {
 
             return (
               <div key={event.id} className="bg-white rounded-3xl shadow-md p-6 border border-slate-100">
+                {resolveEventImage(event) ? (
+                  <img
+                    src={resolveEventImage(event)}
+                    alt={`Cleanup event for ${event.report?.address || 'reported site'}`}
+                    className="w-full h-52 object-cover rounded-2xl border border-slate-200 mb-4"
+                  />
+                ) : null}
                 <div className="flex justify-between items-start mb-4 gap-4">
                   <div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">
@@ -156,7 +167,7 @@ export default function ViewEvents({ onBack }: ViewEventsProps) {
                     <div className="flex items-center text-slate-600 mb-2">
                       <MapPin size={16} className="mr-2" />
                       <span className="text-sm">
-                        {event.report?.address || 'Location will appear after report linkage'}
+                        {event.location || event.report?.address || 'Location will appear after report linkage'}
                       </span>
                     </div>
                     <div className="flex items-center text-slate-600 mb-2">

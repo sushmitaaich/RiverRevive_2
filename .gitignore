@@ -23,3 +23,18 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.venv/
+
+# Python ML workspace
+ml/.venv/
+ml/__pycache__/
+ml/**/*.pyc
+ml/*.pt
+ml/*.onnx
+ml/*.engine
+ml/datasets/*
+!ml/datasets/README.md
+ml/models/*
+!ml/models/.gitkeep
+ml/runs/*
+!ml/runs/.gitkeep

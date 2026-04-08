@@ -17,6 +17,10 @@ import {
 } from '../lib/cleanup';
 import type { CleaningEvent, GarbageReport, PointTransaction } from '../types';
 
+function resolveEventImage(event: CleaningEvent) {
+  return event.beforeUrl || event.report?.mlAnnotatedImageUrl || event.report?.images[0] || '';
+}
+
 function statusClasses(status: string) {
   switch (status) {
     case 'completed':
@@ -225,6 +229,13 @@ export default function ProfilePage() {
                   <div className="space-y-4">
                     {myVolunteerEvents.map((event) => (
                       <div key={event.id} className="rounded-2xl border border-slate-200 p-4">
+                        {resolveEventImage(event) ? (
+                          <img
+                            src={resolveEventImage(event)}
+                            alt={`Cleanup event for ${event.report?.address || 'reported site'}`}
+                            className="w-full h-40 object-cover rounded-2xl border border-slate-200 mb-4"
+                          />
+                        ) : null}
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="font-semibold text-slate-900">
@@ -232,6 +243,9 @@ export default function ProfilePage() {
                             </p>
                             <p className="text-sm text-slate-500 mt-1">
                               {new Date(event.scheduledAt).toLocaleString()}
+                            </p>
+                            <p className="text-sm text-slate-600 mt-2">
+                              {event.location || event.report?.address || 'Location pending'}
                             </p>
                           </div>
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClasses(event.status)}`}>

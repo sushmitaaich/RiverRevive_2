@@ -3,6 +3,7 @@ import {
   AlertCircle,
   Calendar,
   Clock,
+  MapPin,
   Plus,
   Shield,
   TrendingUp,
@@ -23,6 +24,29 @@ import AdminSurveillance from '../admin/AdminSurveillance';
 import type { CleaningEvent, GarbageReport } from '../../types';
 
 type AdminTab = 'overview' | 'reports' | 'events';
+
+function resolveReportImage(report: GarbageReport) {
+  return report.mlAnnotatedImageUrl || report.images[0] || '';
+}
+
+function resolveEventImage(event: CleaningEvent) {
+  return event.beforeUrl || event.report?.mlAnnotatedImageUrl || event.report?.images[0] || '';
+}
+
+function priorityClasses(level: GarbageReport['priorityLevel']) {
+  switch (level) {
+    case 'critical':
+      return 'bg-red-100 text-red-800';
+    case 'high':
+      return 'bg-amber-100 text-amber-800';
+    case 'medium':
+      return 'bg-blue-100 text-blue-800';
+    case 'low':
+      return 'bg-emerald-100 text-emerald-800';
+    default:
+      return 'bg-slate-100 text-slate-700';
+  }
+}
 
 function statusClasses(status: string) {
   switch (status) {
@@ -60,6 +84,7 @@ export default function AdminDashboard() {
   const [scheduleForm, setScheduleForm] = useState({
     reportId: '',
     scheduledAt: '',
+    location: '',
     requiredVolunteers: '4',
     notes: '',
   });
@@ -111,7 +136,13 @@ export default function AdminDashboard() {
   }, []);
 
   const pendingReports = useMemo(
-    () => reports.filter((report) => report.status === 'pending' && report.metadataStatus === 'verified'),
+    () =>
+      reports.filter(
+        (report) =>
+          report.status === 'pending' &&
+          report.metadataStatus === 'verified' &&
+          report.mlStatus === 'verified',
+      ),
     [reports],
   );
 
@@ -139,8 +170,8 @@ export default function AdminDashboard() {
   );
 
   const handleScheduleEvent = async () => {
-    if (!user || !scheduleForm.reportId || !scheduleForm.scheduledAt) {
-      setError('Please choose a report and schedule date/time first.');
+    if (!user || !scheduleForm.reportId || !scheduleForm.scheduledAt || !scheduleForm.location.trim()) {
+      setError('Please choose a report, date/time, and location first.');
       return;
     }
 
@@ -149,6 +180,7 @@ export default function AdminDashboard() {
       await scheduleCleanupEvent({
         reportId: scheduleForm.reportId,
         scheduledAt: scheduleForm.scheduledAt,
+        location: scheduleForm.location.trim(),
         requiredVolunteers: Number(scheduleForm.requiredVolunteers) || 0,
         eventNotes: scheduleForm.notes,
         createdBy: user.id,
@@ -156,6 +188,7 @@ export default function AdminDashboard() {
       setScheduleForm({
         reportId: '',
         scheduledAt: '',
+        location: '',
         requiredVolunteers: '4',
         notes: '',
       });
@@ -362,21 +395,51 @@ export default function AdminDashboard() {
                   </div>
 
                   {pendingReports.length === 0 ? (
-                    <p className="text-slate-500">No verified reports are waiting for scheduling.</p>
+                    <p className="text-slate-500">
+                      No reports have passed both metadata verification and ML garbage detection yet.
+                    </p>
                   ) : (
                     <div className="space-y-4">
                       {pendingReports.slice(0, 4).map((report) => (
                         <div key={report.id} className="rounded-2xl border border-slate-200 p-4">
+                          {resolveReportImage(report) ? (
+                            <img
+                              src={resolveReportImage(report)}
+                              alt={`Verified garbage detection for ${report.address}`}
+                              className="w-full h-48 object-cover rounded-2xl border border-slate-200 mb-4"
+                            />
+                          ) : null}
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                              metadata verified
+                            </span>
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              ml verified
+                            </span>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${priorityClasses(
+                                report.priorityLevel,
+                              )}`}
+                            >
+                              {report.priorityLevel ?? 'unscored'} priority
+                            </span>
+                          </div>
                           <p className="font-medium text-slate-900">{report.address}</p>
                           <p className="text-sm text-slate-500 mt-1">
                             By {report.reporterName} • {new Date(report.createdAt).toLocaleString()}
                           </p>
                           <p className="text-sm text-slate-600 mt-3">{report.description}</p>
+                          {!!report.mlDetectedTypes?.length && (
+                            <p className="text-sm text-slate-600 mt-3">
+                              Detected waste: {report.mlDetectedTypes.join(', ')}
+                            </p>
+                          )}
                           <button
                             onClick={() =>
                               setScheduleForm((current) => ({
                                 ...current,
                                 reportId: report.id,
+                                location: report.address,
                               }))
                             }
                             className="mt-4 text-sm font-medium text-emerald-700 hover:text-emerald-800"
@@ -394,9 +457,14 @@ export default function AdminDashboard() {
                   <div className="space-y-4">
                     <select
                       value={scheduleForm.reportId}
-                      onChange={(event) =>
-                        setScheduleForm((current) => ({ ...current, reportId: event.target.value }))
-                      }
+                      onChange={(event) => {
+                        const selectedReport = pendingReports.find((report) => report.id === event.target.value);
+                        setScheduleForm((current) => ({
+                          ...current,
+                          reportId: event.target.value,
+                          location: selectedReport?.address ?? current.location,
+                        }));
+                      }}
                       className="w-full px-4 py-3 border border-slate-300 rounded-2xl"
                     >
                       <option value="">Select a verified report</option>
@@ -414,6 +482,18 @@ export default function AdminDashboard() {
                       }
                       className="w-full px-4 py-3 border border-slate-300 rounded-2xl"
                     />
+                    <div className="relative">
+                      <MapPin className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={scheduleForm.location}
+                        onChange={(event) =>
+                          setScheduleForm((current) => ({ ...current, location: event.target.value }))
+                        }
+                        className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-2xl"
+                        placeholder="Scheduled cleanup location"
+                      />
+                    </div>
                     <input
                       type="number"
                       min="0"
@@ -510,6 +590,7 @@ export default function AdminDashboard() {
                                 setScheduleForm({
                                   reportId: report.id,
                                   scheduledAt: '',
+                                  location: report.address,
                                   requiredVolunteers: '4',
                                   notes: '',
                                 })
@@ -552,21 +633,39 @@ export default function AdminDashboard() {
 
                   return (
                     <div key={event.id} className="bg-white rounded-3xl shadow-md p-6 border border-slate-100">
-                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+                      <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-6 mb-6">
                         <div>
-                          <h2 className="text-xl font-bold text-slate-900">
-                            {event.report?.address || 'Cleanup event'}
-                          </h2>
-                          <p className="text-sm text-slate-500 mt-1">
-                            {new Date(event.scheduledAt).toLocaleString()}
-                          </p>
-                          <p className="text-sm text-slate-600 mt-3">
-                            {event.volunteerCount}/{event.requiredVolunteers} volunteers registered
-                          </p>
+                          {resolveEventImage(event) ? (
+                            <img
+                              src={resolveEventImage(event)}
+                              alt={`Cleanup event for ${event.report?.address || 'reported site'}`}
+                              className="w-full h-56 object-cover rounded-2xl border border-slate-200"
+                            />
+                          ) : (
+                            <div className="w-full h-56 rounded-2xl border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-sm text-slate-500">
+                              Event image unavailable
+                            </div>
+                          )}
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClasses(event.status)}`}>
-                          {event.status}
-                        </span>
+                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                          <div>
+                            <h2 className="text-xl font-bold text-slate-900">
+                              {event.report?.address || 'Cleanup event'}
+                            </h2>
+                            <p className="text-sm text-slate-500 mt-1">
+                              {new Date(event.scheduledAt).toLocaleString()}
+                            </p>
+                            <p className="text-sm text-slate-600 mt-2">
+                              Location: {event.location || event.report?.address || 'Not set'}
+                            </p>
+                            <p className="text-sm text-slate-600 mt-3">
+                              {event.volunteerCount}/{event.requiredVolunteers} volunteers registered
+                            </p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClasses(event.status)}`}>
+                            {event.status}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
