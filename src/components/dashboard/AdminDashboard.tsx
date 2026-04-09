@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   Calendar,
+  ChevronRight,
   Clock,
+  ImageOff,
   MapPin,
   Plus,
   Shield,
@@ -104,6 +106,7 @@ export default function AdminDashboard() {
     >
   >({});
   const [pendingActionId, setPendingActionId] = useState('');
+  const [selectedPendingReportId, setSelectedPendingReportId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -145,6 +148,11 @@ export default function AdminDashboard() {
     [reports],
   );
 
+  const selectedPendingReport = useMemo(
+    () => pendingReports.find((report) => report.id === selectedPendingReportId) ?? null,
+    [pendingReports, selectedPendingReportId],
+  );
+
   const scheduledEvents = useMemo(
     () => events.filter((event) => event.status === 'upcoming'),
     [events],
@@ -167,6 +175,26 @@ export default function AdminDashboard() {
       }, 0),
     [events],
   );
+
+  useEffect(() => {
+    if (!pendingReports.length) {
+      setSelectedPendingReportId(null);
+      return;
+    }
+
+    if (!selectedPendingReportId || !pendingReports.some((report) => report.id === selectedPendingReportId)) {
+      setSelectedPendingReportId(pendingReports[0].id);
+    }
+  }, [pendingReports, selectedPendingReportId]);
+
+  const openPendingReport = (report: GarbageReport) => {
+    setSelectedPendingReportId(report.id);
+    setScheduleForm((current) => ({
+      ...current,
+      reportId: report.id,
+      location: report.address,
+    }));
+  };
 
   const handleScheduleEvent = async () => {
     if (!user || !scheduleForm.reportId || !scheduleForm.scheduledAt || !scheduleForm.location.trim()) {
@@ -386,7 +414,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)_minmax(320px,0.8fr)] gap-8">
                 <div className="bg-white rounded-3xl shadow-md p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-slate-900">Pending Verified Reports</h2>
@@ -399,8 +427,17 @@ export default function AdminDashboard() {
                     </p>
                   ) : (
                     <div className="space-y-4">
-                      {pendingReports.slice(0, 4).map((report) => (
-                        <div key={report.id} className="rounded-2xl border border-slate-200 p-4">
+                      {pendingReports.map((report) => (
+                        <button
+                          key={report.id}
+                          type="button"
+                          onClick={() => openPendingReport(report)}
+                          className={`w-full rounded-2xl border p-4 text-left transition ${
+                            selectedPendingReportId === report.id
+                              ? 'border-emerald-400 bg-emerald-50/50 shadow-sm'
+                              : 'border-slate-200 hover:border-emerald-300 hover:bg-slate-50'
+                          }`}
+                        >
                           {resolveReportImage(report) ? (
                             <img
                               src={resolveReportImage(report)}
@@ -441,20 +478,112 @@ export default function AdminDashboard() {
                               Detected waste: {report.mlDetectedTypes.join(', ')}
                             </p>
                           )}
-                          <button
-                            onClick={() =>
-                              setScheduleForm((current) => ({
-                                ...current,
-                                reportId: report.id,
-                                location: report.address,
-                              }))
-                            }
-                            className="mt-4 text-sm font-medium text-emerald-700 hover:text-emerald-800"
-                          >
-                            Schedule this report
-                          </button>
-                        </div>
+                          <div className="mt-4 flex items-center justify-between">
+                            <span className="text-sm font-medium text-emerald-700">Open details</span>
+                            <ChevronRight className="h-4 w-4 text-emerald-700" />
+                          </div>
+                        </button>
                       ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-3xl shadow-md p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-slate-900">Selected Report</h2>
+                    {selectedPendingReport ? (
+                      <span className="text-sm text-slate-500">Ready to schedule</span>
+                    ) : null}
+                  </div>
+
+                  {!selectedPendingReport ? (
+                    <p className="text-slate-500">
+                      Select a pending verified report to inspect the report image and schedule it.
+                    </p>
+                  ) : (
+                    <div className="space-y-5">
+                      {resolveReportImage(selectedPendingReport) ? (
+                        <img
+                          src={resolveReportImage(selectedPendingReport)}
+                          alt={`Waste detection output for ${selectedPendingReport.address}`}
+                          className="w-full h-64 object-cover rounded-2xl border border-slate-200"
+                        />
+                      ) : (
+                        <div className="w-full h-64 rounded-2xl border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-sm text-slate-500">
+                          <div className="flex items-center gap-2">
+                            <ImageOff className="h-4 w-4" />
+                            No report image available
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-sm text-slate-500">Address</p>
+                          <p className="font-semibold text-slate-900">{selectedPendingReport.address}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-500">Reporter</p>
+                          <p className="text-slate-900">{selectedPendingReport.reporterName}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-500">Submitted</p>
+                          <p className="text-slate-900">
+                            {new Date(selectedPendingReport.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                            metadata {selectedPendingReport.metadataStatus}
+                          </span>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              selectedPendingReport.mlStatus === 'verified'
+                                ? 'bg-blue-100 text-blue-800'
+                                : selectedPendingReport.mlStatus === 'rejected'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
+                            ml {selectedPendingReport.mlStatus ?? 'pending'}
+                          </span>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${priorityClasses(
+                              selectedPendingReport.priorityLevel,
+                            )}`}
+                          >
+                            {selectedPendingReport.priorityLevel ?? 'unscored'} priority
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-500">Description</p>
+                          <p className="text-slate-700">
+                            {selectedPendingReport.description || 'No description provided.'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-500">Detected waste types</p>
+                          <p className="text-slate-700">
+                            {selectedPendingReport.mlDetectedTypes?.length
+                              ? selectedPendingReport.mlDetectedTypes.join(', ')
+                              : 'Waiting for ML output or no types detected yet.'}
+                          </p>
+                        </div>
+                        {selectedPendingReport.verificationNotes ? (
+                          <div>
+                            <p className="text-sm text-slate-500">Verification notes</p>
+                            <p className="text-slate-700">{selectedPendingReport.verificationNotes}</p>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => openPendingReport(selectedPendingReport)}
+                        className="w-full bg-emerald-100 text-emerald-800 py-3 rounded-2xl hover:bg-emerald-200"
+                      >
+                        Use this report in the schedule form
+                      </button>
                     </div>
                   )}
                 </div>
@@ -466,6 +595,7 @@ export default function AdminDashboard() {
                       value={scheduleForm.reportId}
                       onChange={(event) => {
                         const selectedReport = pendingReports.find((report) => report.id === event.target.value);
+                        setSelectedPendingReportId(selectedReport?.id ?? null);
                         setScheduleForm((current) => ({
                           ...current,
                           reportId: event.target.value,
@@ -593,15 +723,7 @@ export default function AdminDashboard() {
                         <td className="py-4 px-4">
                           {report.status === 'pending' && report.metadataStatus === 'verified' ? (
                             <button
-                              onClick={() =>
-                                setScheduleForm({
-                                  reportId: report.id,
-                                  scheduledAt: '',
-                                  location: report.address,
-                                  requiredVolunteers: '4',
-                                  notes: '',
-                                })
-                              }
+                              onClick={() => openPendingReport(report)}
                               className="text-emerald-700 hover:text-emerald-800 text-sm font-medium"
                             >
                               Schedule
