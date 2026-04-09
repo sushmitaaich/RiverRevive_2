@@ -94,22 +94,23 @@ export default function ViewEvents({ onBack }: ViewEventsProps) {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="mb-6">
+    <div className="rr-page">
+      <div className="rr-page-hero mb-8">
         <button
           onClick={onBack}
-          className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-emerald-100 transition hover:text-white"
         >
-          <ArrowLeft size={20} className="mr-2" />
+          <ArrowLeft size={18} />
           Back to Dashboard
         </button>
-        <h1 className="text-3xl font-bold text-slate-900">Cleanup Events</h1>
-        <p className="text-slate-600 mt-2">
+        <p className="rr-page-kicker">Live Operations</p>
+        <h1 className="mt-4 text-4xl font-bold text-white">Cleanup Events</h1>
+        <p className="mt-4 max-w-3xl text-emerald-50/90">
           View upcoming, ongoing, and completed land cleanup drives from the live database.
         </p>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-md p-6 mb-6">
+      <div className="rr-toolbar mb-6 p-6">
         <div className="flex flex-wrap gap-3">
           {[
             { id: 'all', label: 'All Events' },
@@ -120,11 +121,7 @@ export default function ViewEvents({ onBack }: ViewEventsProps) {
             <button
               key={tab.id}
               onClick={() => setFilter(tab.id as typeof filter)}
-              className={`px-4 py-2 rounded-full font-medium ${
-                filter === tab.id
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+              className={`rr-tab ${filter === tab.id ? 'rr-tab-active' : ''}`}
             >
               {tab.label}
             </button>
@@ -139,89 +136,79 @@ export default function ViewEvents({ onBack }: ViewEventsProps) {
       )}
 
       {loading ? (
-        <div className="rounded-3xl bg-white p-8 shadow-md text-slate-600">Loading events...</div>
+        <div className="rr-card p-8 text-slate-600">Loading events...</div>
       ) : filteredEvents.length === 0 ? (
-        <div className="rounded-3xl bg-white p-8 shadow-md text-slate-600">
-          No cleanup events match this filter yet.
-        </div>
+        <div className="rr-card p-8 text-slate-600">No cleanup events match this filter yet.</div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {filteredEvents.map((event) => {
-            const alreadyRegistered = !!user &&
-              event.volunteers.some((volunteer) => volunteer.collectorId === user.id);
+            const alreadyRegistered =
+              !!user && event.volunteers.some((volunteer) => volunteer.collectorId === user.id);
 
             return (
-              <div key={event.id} className="bg-white rounded-3xl shadow-md p-6 border border-slate-100">
+              <div key={event.id} className="rr-card p-6">
                 {resolveEventImage(event) ? (
-                  <img
-                    src={resolveEventImage(event)}
-                    alt={`Cleanup event for ${event.report?.address || 'reported site'}`}
-                    className="w-full h-52 object-cover rounded-2xl border border-slate-200 mb-4"
-                  />
+                  <div className="rr-image-frame mb-4">
+                    <img
+                      src={resolveEventImage(event)}
+                      alt={`Cleanup event for ${event.report?.address || 'reported site'}`}
+                      className="h-52 w-full object-cover"
+                    />
+                  </div>
                 ) : null}
-                <div className="flex justify-between items-start mb-4 gap-4">
+                <div className="mb-4 flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">
+                    <h3 className="mb-2 text-xl font-bold text-slate-900">
                       {event.report?.address || 'Cleanup event'}
                     </h3>
-                    <div className="flex items-center text-slate-600 mb-2">
+                    <div className="mb-2 flex items-center text-slate-600">
                       <MapPin size={16} className="mr-2" />
                       <span className="text-sm">
                         {event.location || event.report?.address || 'Location will appear after report linkage'}
                       </span>
                     </div>
-                    <div className="flex items-center text-slate-600 mb-2">
+                    <div className="mb-2 flex items-center text-slate-600">
                       <Calendar size={16} className="mr-2" />
-                      <span className="text-sm">
-                        {new Date(event.scheduledAt).toLocaleString()}
-                      </span>
+                      <span className="text-sm">{new Date(event.scheduledAt).toLocaleString()}</span>
                     </div>
                     <div className="flex items-center text-slate-600">
                       <Clock size={16} className="mr-2" />
                       <span className="text-sm">
-                        Reporter reward: {event.reporterPoints} pts • Volunteer reward: {event.volunteerPoints} pts
+                        Reporter reward: {event.reporterPoints} pts - Volunteer reward: {event.volunteerPoints} pts
                       </span>
                     </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClasses(event.status)}`}>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses(event.status)}`}>
                     {event.status}
                   </span>
                 </div>
 
-                {event.report?.description && (
-                  <p className="text-slate-600 mb-4">{event.report.description}</p>
-                )}
+                {event.report?.description && <p className="mb-4 text-slate-600">{event.report.description}</p>}
 
-                {event.eventNotes && (
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600 mb-4">
-                    {event.eventNotes}
-                  </div>
-                )}
+                {event.eventNotes && <div className="rr-card-muted mb-4 px-4 py-3 text-sm text-slate-600">{event.eventNotes}</div>}
 
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div className="text-center rounded-2xl bg-slate-50 p-3">
-                    <div className="flex items-center justify-center mb-1">
-                      <Users className="w-4 h-4 text-blue-600" />
+                <div className="mb-4 grid grid-cols-3 gap-4">
+                  <div className="rr-card-muted p-3 text-center">
+                    <div className="mb-1 flex items-center justify-center">
+                      <Users className="h-4 w-4 text-blue-600" />
                     </div>
                     <p className="text-sm font-semibold text-blue-700">
                       {event.volunteerCount}/{event.requiredVolunteers}
                     </p>
                     <p className="text-xs text-slate-500">Volunteers</p>
                   </div>
-                  <div className="text-center rounded-2xl bg-slate-50 p-3">
-                    <div className="flex items-center justify-center mb-1">
-                      <Clock className="w-4 h-4 text-amber-600" />
+                  <div className="rr-card-muted p-3 text-center">
+                    <div className="mb-1 flex items-center justify-center">
+                      <Clock className="h-4 w-4 text-amber-600" />
                     </div>
                     <p className="text-sm font-semibold text-amber-700">{event.status}</p>
                     <p className="text-xs text-slate-500">Stage</p>
                   </div>
-                  <div className="text-center rounded-2xl bg-slate-50 p-3">
-                    <div className="flex items-center justify-center mb-1">
-                      <MapPin className="w-4 h-4 text-emerald-600" />
+                  <div className="rr-card-muted p-3 text-center">
+                    <div className="mb-1 flex items-center justify-center">
+                      <MapPin className="h-4 w-4 text-emerald-600" />
                     </div>
-                    <p className="text-sm font-semibold text-emerald-700">
-                      {event.report?.density || 'medium'}
-                    </p>
+                    <p className="text-sm font-semibold text-emerald-700">{event.report?.density || 'medium'}</p>
                     <p className="text-xs text-slate-500">Density</p>
                   </div>
                 </div>
@@ -230,10 +217,10 @@ export default function ViewEvents({ onBack }: ViewEventsProps) {
                   <button
                     onClick={() => handleVolunteerToggle(event)}
                     disabled={pendingEventId === event.id}
-                    className={`w-full py-3 rounded-2xl transition-colors ${
+                    className={`w-full rounded-2xl py-3 transition-colors ${
                       alreadyRegistered
                         ? 'bg-slate-700 text-white hover:bg-slate-800'
-                        : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:brightness-105'
                     } disabled:opacity-60`}
                   >
                     {pendingEventId === event.id
@@ -245,7 +232,7 @@ export default function ViewEvents({ onBack }: ViewEventsProps) {
                 )}
 
                 {event.status === 'completed' && (
-                  <div className="rounded-2xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                     This event has been completed and reflected in the gallery and points history.
                   </div>
                 )}

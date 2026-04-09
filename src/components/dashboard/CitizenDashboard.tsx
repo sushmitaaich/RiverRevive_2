@@ -72,10 +72,11 @@ export default function CitizenDashboard() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Citizen Dashboard</h1>
-        <p className="text-slate-600 mt-2">
+    <div className="rr-page">
+      <div className="rr-page-hero mb-8">
+        <p className="rr-page-kicker">Citizen Workspace</p>
+        <h1 className="mt-4 text-4xl font-bold text-white">Citizen Dashboard</h1>
+        <p className="mt-4 max-w-3xl text-emerald-50/90">
           Report land waste hotspots and follow each cleanup event from verification to completion.
         </p>
       </div>
@@ -86,79 +87,79 @@ export default function CitizenDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-3xl shadow-md">
+      <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="rr-stat-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-500 text-sm">Total Points</p>
+              <p className="text-sm text-slate-500">Total Points</p>
               <p className="text-3xl font-bold text-emerald-600">{user?.points ?? 0}</p>
             </div>
-            <Award className="w-12 h-12 text-emerald-500" />
+            <Award className="h-12 w-12 text-emerald-500" />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl shadow-md">
+        <div className="rr-stat-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-500 text-sm">Reports Submitted</p>
+              <p className="text-sm text-slate-500">Reports Submitted</p>
               <p className="text-3xl font-bold text-blue-600">{reports.length}</p>
             </div>
-            <Upload className="w-12 h-12 text-blue-500" />
+            <Upload className="h-12 w-12 text-blue-500" />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl shadow-md">
+        <div className="rr-stat-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-500 text-sm">Sites Cleaned</p>
+              <p className="text-sm text-slate-500">Sites Cleaned</p>
               <p className="text-3xl font-bold text-violet-600">{completedReports}</p>
             </div>
-            <MapPin className="w-12 h-12 text-violet-500" />
+            <MapPin className="h-12 w-12 text-violet-500" />
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-md p-6 mb-8">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="rr-card mb-8 p-6">
+        <h2 className="mb-6 text-xl font-bold text-slate-900">Quick Actions</h2>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <button
             onClick={() => setCurrentView('report-waste')}
-            className="p-5 bg-red-50 rounded-2xl hover:bg-red-100 transition-colors text-center"
+            className="rr-card-muted p-5 text-center transition hover:-translate-y-0.5"
           >
-            <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <Upload className="w-6 h-6 text-red-600" />
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100">
+              <Upload className="h-6 w-6 text-red-600" />
             </div>
-            <h3 className="font-medium text-slate-900 mb-1">Report Waste</h3>
+            <h3 className="mb-1 font-medium text-slate-900">Report Waste</h3>
             <p className="text-sm text-slate-600">Upload a geotagged land-waste photo</p>
           </button>
 
           <button
             onClick={() => setCurrentView('view-events')}
-            className="p-5 bg-emerald-50 rounded-2xl hover:bg-emerald-100 transition-colors text-center"
+            className="rr-card-muted p-5 text-center transition hover:-translate-y-0.5"
           >
-            <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <Calendar className="w-6 h-6 text-emerald-600" />
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100">
+              <Calendar className="h-6 w-6 text-emerald-600" />
             </div>
-            <h3 className="font-medium text-slate-900 mb-1">View Events</h3>
+            <h3 className="mb-1 font-medium text-slate-900">View Events</h3>
             <p className="text-sm text-slate-600">Track upcoming and completed cleanups</p>
           </button>
 
           <button
             onClick={() => setCurrentView('flood-forecast')}
-            className="p-5 bg-sky-50 rounded-2xl hover:bg-sky-100 transition-colors text-center"
+            className="rr-card-muted p-5 text-center transition hover:-translate-y-0.5"
           >
-            <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <MapPin className="w-6 h-6 text-sky-600" />
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100">
+              <MapPin className="h-6 w-6 text-sky-600" />
             </div>
-            <h3 className="font-medium text-slate-900 mb-1">Flood Forecast</h3>
+            <h3 className="mb-1 font-medium text-slate-900">Flood Forecast</h3>
             <p className="text-sm text-slate-600">Keep an eye on area risk conditions</p>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-8">
-        <div className="bg-white rounded-3xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-6">My Recent Reports</h2>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="rr-card p-6">
+          <h2 className="mb-6 text-xl font-bold text-slate-900">My Recent Reports</h2>
 
           {loading ? (
             <p className="text-slate-500">Loading your reports...</p>
@@ -167,28 +168,28 @@ export default function CitizenDashboard() {
           ) : (
             <div className="space-y-4">
               {reports.slice(0, 5).map((report) => (
-                <div key={report.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-2xl">
-                  <div className="flex items-center">
-                    <MapPin className="w-5 h-5 text-slate-400 mr-3" />
-                    <div>
-                      <p className="font-medium text-slate-900">{report.address}</p>
-                      <p className="text-sm text-slate-500">
-                        {new Date(report.createdAt).toLocaleString()}
-                      </p>
+                <div key={report.id} className="rounded-2xl border border-emerald-100/80 bg-white/75 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center">
+                      <MapPin className="mr-3 h-5 w-5 text-slate-400" />
+                      <div>
+                        <p className="font-medium text-slate-900">{report.address}</p>
+                        <p className="text-sm text-slate-500">{new Date(report.createdAt).toLocaleString()}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      report.status === 'completed'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : report.status === 'ongoing'
-                          ? 'bg-amber-100 text-amber-800'
-                          : report.status === 'scheduled'
-                            ? 'bg-blue-100 text-blue-800'
-                            : report.status === 'rejected'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-slate-100 text-slate-700'
-                    }`}>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        report.status === 'completed'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : report.status === 'ongoing'
+                            ? 'bg-amber-100 text-amber-800'
+                            : report.status === 'scheduled'
+                              ? 'bg-blue-100 text-blue-800'
+                              : report.status === 'rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
                       {report.status}
                     </span>
                   </div>
@@ -198,8 +199,8 @@ export default function CitizenDashboard() {
           )}
         </div>
 
-        <div className="bg-white rounded-3xl shadow-md p-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-6">Upcoming Events</h2>
+        <div className="rr-card p-6">
+          <h2 className="mb-6 text-xl font-bold text-slate-900">Upcoming Events</h2>
 
           {events.filter((event) => event.status === 'upcoming').length === 0 ? (
             <p className="text-slate-500">Newly scheduled cleanup events will appear here.</p>
@@ -209,24 +210,22 @@ export default function CitizenDashboard() {
                 .filter((event) => event.status === 'upcoming')
                 .slice(0, 4)
                 .map((event) => (
-                  <div key={event.id} className="rounded-2xl border border-slate-200 p-4">
+                  <div key={event.id} className="rr-card-muted p-4">
                     {resolveEventImage(event) ? (
-                      <img
-                        src={resolveEventImage(event)}
-                        alt={`Cleanup event for ${event.report?.address || 'reported site'}`}
-                        className="w-full h-40 object-cover rounded-2xl border border-slate-200 mb-4"
-                      />
+                      <div className="rr-image-frame mb-4">
+                        <img
+                          src={resolveEventImage(event)}
+                          alt={`Cleanup event for ${event.report?.address || 'reported site'}`}
+                          className="h-40 w-full object-cover"
+                        />
+                      </div>
                     ) : null}
-                    <p className="font-medium text-slate-900">
-                      {event.report?.address || 'Cleanup event'}
-                    </p>
-                    <p className="text-sm text-slate-500 mt-1">
-                      {new Date(event.scheduledAt).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-slate-600 mt-2">
+                    <p className="font-medium text-slate-900">{event.report?.address || 'Cleanup event'}</p>
+                    <p className="mt-1 text-sm text-slate-500">{new Date(event.scheduledAt).toLocaleString()}</p>
+                    <p className="mt-2 text-sm text-slate-600">
                       {event.location || event.report?.address || 'Location pending'}
                     </p>
-                    <p className="text-sm text-slate-600 mt-2">
+                    <p className="mt-2 text-sm text-slate-600">
                       {event.volunteerCount}/{event.requiredVolunteers} volunteers registered
                     </p>
                   </div>

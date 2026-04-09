@@ -298,10 +298,11 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Municipal Admin Dashboard</h1>
-        <p className="text-slate-600 mt-2">
+    <div className="rr-page">
+      <div className="rr-page-hero mb-8">
+        <p className="rr-page-kicker">Municipal Command</p>
+        <h1 className="mt-4 text-4xl font-bold text-white">Municipal Admin Dashboard</h1>
+        <p className="mt-4 max-w-3xl text-emerald-50/90">
           Verify land-waste reports, schedule cleanup events, manage volunteers, and close
           completed operations.
         </p>
@@ -313,8 +314,8 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <div className="border-b border-slate-200 mb-8">
-        <nav className="flex gap-6 overflow-x-auto">
+      <div className="rr-toolbar mb-8 px-4 py-3">
+        <nav className="flex gap-3 overflow-x-auto">
           {[
             { id: 'overview', label: 'Overview' },
             { id: 'reports', label: 'Reports' },
@@ -323,11 +324,7 @@ export default function AdminDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as AdminTab)}
-              className={`py-3 px-1 border-b-2 font-medium text-sm ${
-                activeTab === tab.id
-                  ? 'border-emerald-500 text-emerald-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
+              className={`rr-tab ${activeTab === tab.id ? 'rr-tab-active' : ''}`}
             >
               {tab.label}
             </button>
@@ -336,7 +333,7 @@ export default function AdminDashboard() {
       </div>
 
       {loading ? (
-        <div className="rounded-3xl bg-white p-8 shadow-md text-slate-600">
+        <div className="rr-card p-8 text-slate-600">
           Loading admin data...
         </div>
       ) : (
@@ -470,7 +467,7 @@ export default function AdminDashboard() {
                           </div>
                           <p className="font-medium text-slate-900">{report.address}</p>
                           <p className="text-sm text-slate-500 mt-1">
-                            By {report.reporterName} • {new Date(report.createdAt).toLocaleString()}
+                            By {report.reporterName} - {new Date(report.createdAt).toLocaleString()}
                           </p>
                           <p className="text-sm text-slate-600 mt-3">{report.description}</p>
                           {!!report.mlDetectedTypes?.length && (
@@ -1000,7 +997,7 @@ export default function AdminDashboard() {
                                 Completed Event Summary
                               </p>
                               <p className="text-sm text-emerald-800">
-                                Reporter points: {event.reporterPoints} • Volunteer points:{' '}
+                                Reporter points: {event.reporterPoints} - Volunteer points:{' '}
                                 {event.volunteerPoints}
                               </p>
                               {event.completionNotes && (

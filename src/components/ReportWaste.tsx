@@ -63,9 +63,7 @@ export default function ReportWaste({ onBack }: ReportWasteProps) {
 
       return {
         ...current,
-        wasteTypes: exists
-          ? current.wasteTypes.filter((item) => item !== type)
-          : [...current.wasteTypes, type],
+        wasteTypes: exists ? current.wasteTypes.filter((item) => item !== type) : [...current.wasteTypes, type],
       };
     });
   };
@@ -118,59 +116,51 @@ export default function ReportWaste({ onBack }: ReportWasteProps) {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="mb-6">
+    <div className="rr-page">
+      <div className="rr-page-hero mb-8">
         <button
           onClick={onBack}
-          className="flex items-center text-blue-600 hover:text-blue-800 mb-4"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-emerald-100 transition hover:text-white"
         >
-          <ArrowLeft size={20} className="mr-2" />
+          <ArrowLeft size={18} />
           Back to Dashboard
         </button>
-        <h1 className="text-3xl font-bold text-slate-900">Report Land Waste</h1>
-        <p className="text-slate-600 mt-2">
+        <p className="rr-page-kicker">Field Report</p>
+        <h1 className="mt-4 text-4xl font-bold text-white">Report Land Waste</h1>
+        <p className="mt-4 max-w-3xl text-emerald-50/90">
           Upload a geo-tagged photo of roadside, market, residential, or public-space waste.
         </p>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-md p-6">
+      <div className="rr-card p-6">
         <form onSubmit={handleSubmitReport} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Location Address</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Location Address</label>
               <div className="space-y-2">
                 <input
                   type="text"
                   value={reportData.location}
-                  onChange={(event) =>
-                    setReportData((current) => ({ ...current, location: event.target.value }))
-                  }
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  onChange={(event) => setReportData((current) => ({ ...current, location: event.target.value }))}
+                  className="rr-input"
                   placeholder="Enter the land location or landmark"
                   required
                 />
-                <button
-                  type="button"
-                  onClick={handleGetLocation}
-                  className="w-full bg-emerald-600 text-white px-4 py-3 rounded-xl hover:bg-emerald-700 flex items-center justify-center"
-                >
-                  <MapPin size={16} className="mr-2" />
+                <button type="button" onClick={handleGetLocation} className="rr-btn-primary w-full">
+                  <MapPin size={16} />
                   Capture Browser Location
                 </button>
                 {reportData.geoLocation && (
                   <p className="text-sm text-emerald-700">
-                    Captured location: {reportData.geoLocation.lat.toFixed(6)},{' '}
-                    {reportData.geoLocation.lng.toFixed(6)}
+                    Captured location: {reportData.geoLocation.lat.toFixed(6)}, {reportData.geoLocation.lng.toFixed(6)}
                   </p>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Upload Geo-tagged Photo
-              </label>
-              <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6">
+              <label className="mb-2 block text-sm font-medium text-slate-700">Upload Geo-tagged Photo</label>
+              <div className="rounded-[1.5rem] border-2 border-dashed border-emerald-200 bg-white/75 p-6">
                 <input
                   type="file"
                   accept="image/*"
@@ -179,27 +169,23 @@ export default function ReportWaste({ onBack }: ReportWasteProps) {
                   id="image-upload"
                   required
                 />
-                <label htmlFor="image-upload" className="flex flex-col items-center cursor-pointer">
-                  <Camera className="w-12 h-12 text-slate-400 mb-4" />
-                  <span className="text-sm text-slate-600 text-center">
-                    {reportData.image
-                      ? reportData.image.name
-                      : 'Click to upload a photo with camera GPS metadata enabled'}
+                <label htmlFor="image-upload" className="flex cursor-pointer flex-col items-center">
+                  <Camera className="mb-4 h-12 w-12 text-slate-400" />
+                  <span className="text-center text-sm text-slate-600">
+                    {reportData.image ? reportData.image.name : 'Click to upload a photo with camera GPS metadata enabled'}
                   </span>
                 </label>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Waste Density</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Waste Density</label>
               <select
                 value={reportData.density}
-                onChange={(event) =>
-                  setReportData((current) => ({ ...current, density: event.target.value }))
-                }
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                onChange={(event) => setReportData((current) => ({ ...current, density: event.target.value }))}
+                className="rr-input"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -208,7 +194,7 @@ export default function ReportWaste({ onBack }: ReportWasteProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Waste Types</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Waste Types</label>
               <div className="flex flex-wrap gap-2">
                 {wasteTypeOptions.map((type) => {
                   const active = reportData.wasteTypes.includes(type);
@@ -218,10 +204,10 @@ export default function ReportWaste({ onBack }: ReportWasteProps) {
                       key={type}
                       type="button"
                       onClick={() => toggleWasteType(type)}
-                      className={`px-3 py-2 rounded-full text-sm border transition-colors ${
+                      className={`rounded-full border px-3 py-2 text-sm transition-colors ${
                         active
-                          ? 'bg-emerald-600 text-white border-emerald-600'
-                          : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'
+                          ? 'border-emerald-600 bg-emerald-600 text-white'
+                          : 'border-emerald-100 bg-white text-slate-700 hover:border-emerald-300'
                       }`}
                     >
                       {type}
@@ -233,27 +219,25 @@ export default function ReportWaste({ onBack }: ReportWasteProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Detailed Description</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Detailed Description</label>
             <textarea
               value={reportData.description}
-              onChange={(event) =>
-                setReportData((current) => ({ ...current, description: event.target.value }))
-              }
+              onChange={(event) => setReportData((current) => ({ ...current, description: event.target.value }))}
               rows={4}
-              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="rr-input"
               placeholder="Describe the waste pile, how severe it is, the surrounding landmark, and whether access is easy for cleanup teams."
               required
             />
           </div>
 
-          <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
-            <h3 className="font-medium text-emerald-900 mb-2">Submission Checks</h3>
-            <ul className="text-sm text-emerald-800 space-y-1">
-              <li>• Browser location is stored with every submitted report.</li>
-              <li>• Photo GPS metadata is compared against that browser location.</li>
-              <li>• Matching photos become pending reports for the municipal admin.</li>
-              <li>• Non-matching or metadata-missing photos are marked rejected.</li>
-              <li>• Points are awarded only after the cleanup event is completed.</li>
+          <div className="rr-card-muted p-4">
+            <h3 className="mb-2 font-medium text-emerald-900">Submission Checks</h3>
+            <ul className="space-y-1 text-sm text-emerald-800">
+              <li>- Browser location is stored with every submitted report.</li>
+              <li>- Photo GPS metadata is compared against that browser location.</li>
+              <li>- Matching photos become pending reports for the municipal admin.</li>
+              <li>- Non-matching or metadata-missing photos are marked rejected.</li>
+              <li>- Points are awarded only after the cleanup event is completed.</li>
             </ul>
           </div>
 
@@ -264,26 +248,18 @@ export default function ReportWaste({ onBack }: ReportWasteProps) {
           )}
 
           {error && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex gap-2">
-              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div className="flex gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={onBack}
-              className="px-6 py-3 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50"
-            >
+            <button type="button" onClick={onBack} className="rr-btn-secondary">
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-60 flex items-center"
-            >
-              <Send size={16} className="mr-2" />
+            <button type="submit" disabled={submitting} className="rr-btn-primary disabled:cursor-not-allowed disabled:opacity-60">
+              <Send size={16} />
               {submitting ? 'Submitting...' : 'Submit Report'}
             </button>
           </div>

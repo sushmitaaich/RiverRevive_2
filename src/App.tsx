@@ -20,7 +20,9 @@ function AppContent() {
   const [currentPage, setCurrentPage] = React.useState<AppPage>('dashboard');
   const [showLogin, setShowLogin] = React.useState(false);
   const [showSignUp, setShowSignUp] = React.useState(false);
-  const [selectedRole, setSelectedRole] = React.useState<'citizen' | 'collector' | 'admin' | null>(null);
+  const [selectedRole, setSelectedRole] = React.useState<
+    'citizen' | 'collector' | 'admin' | null
+  >(null);
 
   if (!user) {
     if (showSignUp) {
@@ -48,13 +50,14 @@ function AppContent() {
     }
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-emerald-50 to-cyan-50 flex items-center justify-center">
+      <div className="rr-app-shell flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           <button
             onClick={() => setShowLogin(false)}
-            className="mb-4 text-blue-600 hover:text-blue-800 flex items-center"
+            className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-white/70 px-4 py-2 text-sm font-medium text-emerald-800 shadow-sm backdrop-blur-sm transition hover:bg-white/90"
           >
-            ← Back to role selection
+            <span aria-hidden="true">&lt;-</span>
+            <span>Back to role selection</span>
           </button>
           <LoginForm selectedRole={selectedRole} />
         </div>
@@ -72,20 +75,20 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="rr-app-shell">
       <Header currentPage={currentPage} onNavigate={setCurrentPage} />
       <div className="fixed bottom-6 right-6 z-40">
-        <div className="flex flex-col space-y-3">
+        <div className="flex flex-col space-y-3 rounded-[2rem] border border-white/70 bg-white/72 p-3 shadow-[0_22px_52px_rgba(10,49,42,0.16)] backdrop-blur-xl">
           <button
             onClick={() => setCurrentPage('dashboard')}
-            className={`p-3 rounded-full shadow-lg transition-all ${
+            className={`rounded-full p-3 shadow-lg transition-all ${
               currentPage === 'dashboard'
-                ? 'bg-emerald-600 text-white'
-                : 'bg-white text-slate-600 hover:bg-slate-50'
+                ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white'
+                : 'bg-white/90 text-slate-600 hover:bg-white'
             }`}
             title="Dashboard"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -96,14 +99,14 @@ function AppContent() {
           </button>
           <button
             onClick={() => setCurrentPage('gallery')}
-            className={`p-3 rounded-full shadow-lg transition-all ${
+            className={`rounded-full p-3 shadow-lg transition-all ${
               currentPage === 'gallery'
-                ? 'bg-cyan-600 text-white'
-                : 'bg-white text-slate-600 hover:bg-slate-50'
+                ? 'bg-gradient-to-br from-cyan-600 to-teal-600 text-white'
+                : 'bg-white/90 text-slate-600 hover:bg-white'
             }`}
             title="Gallery"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -114,14 +117,14 @@ function AppContent() {
           </button>
           <button
             onClick={() => setCurrentPage('profile')}
-            className={`p-3 rounded-full shadow-lg transition-all ${
+            className={`rounded-full p-3 shadow-lg transition-all ${
               currentPage === 'profile'
-                ? 'bg-slate-700 text-white'
-                : 'bg-white text-slate-600 hover:bg-slate-50'
+                ? 'bg-gradient-to-br from-slate-700 to-slate-600 text-white'
+                : 'bg-white/90 text-slate-600 hover:bg-white'
             }`}
             title="Profile"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -132,7 +135,7 @@ function AppContent() {
           </button>
         </div>
       </div>
-      <main>{renderCurrentPage()}</main>
+      <main className="pb-10">{renderCurrentPage()}</main>
     </div>
   );
 }

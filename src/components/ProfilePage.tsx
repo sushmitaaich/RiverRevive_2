@@ -92,9 +92,7 @@ export default function ProfilePage() {
   const myVolunteerEvents = useMemo(() => {
     if (!user) return [];
 
-    return events.filter((event) =>
-      event.volunteers.some((volunteer) => volunteer.collectorId === user.id),
-    );
+    return events.filter((event) => event.volunteers.some((volunteer) => volunteer.collectorId === user.id));
   }, [events, user]);
 
   if (!user) {
@@ -102,24 +100,25 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden mb-8">
-        <div className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-cyan-600 px-8 py-10 text-white">
+    <div className="rr-page">
+      <div className="rr-card overflow-hidden border border-white/80 mb-8">
+        <div className="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-600 px-8 py-10 text-white">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
-                <UserCircle2 className="w-9 h-9" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/20 bg-white/15">
+                <UserCircle2 className="h-9 w-9" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">{user.name}</h1>
-                <p className="text-emerald-50 capitalize">{user.role} profile</p>
+                <p className="rr-page-kicker">Personal Hub</p>
+                <h1 className="mt-4 text-3xl font-bold">{user.name}</h1>
+                <p className="capitalize text-emerald-50">{user.role} profile</p>
                 <div className="mt-3 flex flex-wrap gap-3 text-sm text-emerald-50">
                   <span className="inline-flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
+                    <MapPin className="h-4 w-4" />
                     {user.location || 'Location not added yet'}
                   </span>
                   <span className="inline-flex items-center gap-1">
-                    <ShieldCheck className="w-4 h-4" />
+                    <ShieldCheck className="h-4 w-4" />
                     {user.approved ? 'Approved account' : 'Pending approval'}
                   </span>
                 </div>
@@ -127,11 +126,11 @@ export default function ProfilePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 md:min-w-[280px]">
-              <div className="rounded-2xl bg-white/10 border border-white/15 p-4">
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
                 <p className="text-sm text-emerald-50/80">Total points</p>
                 <p className="text-3xl font-bold">{user.points}</p>
               </div>
-              <div className="rounded-2xl bg-white/10 border border-white/15 p-4">
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
                 <p className="text-sm text-emerald-50/80">Reports submitted</p>
                 <p className="text-3xl font-bold">{reports.length}</p>
               </div>
@@ -139,9 +138,9 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="px-8 py-6 bg-slate-50 border-t border-slate-100">
+        <div className="border-t border-emerald-100 bg-emerald-50/60 px-8 py-6">
           <p className="text-sm text-slate-600">
-            This page now reflects the live status of your land-based cleanup reports, scheduled events,
+            This page reflects the live status of your land-based cleanup reports, scheduled events,
             and awarded points from Supabase.
           </p>
         </div>
@@ -154,12 +153,12 @@ export default function ProfilePage() {
       )}
 
       {loading ? (
-        <div className="rounded-2xl bg-white p-8 shadow-md text-slate-600">Loading profile data...</div>
+        <div className="rr-card p-8 text-slate-600">Loading profile data...</div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-8">
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1.4fr_1fr]">
           <div className="space-y-8">
-            <section className="bg-white rounded-3xl shadow-md p-6">
-              <div className="flex items-center justify-between mb-6">
+            <section className="rr-card p-6">
+              <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-slate-900">Submitted Reports</h2>
                 <span className="text-sm text-slate-500">{reports.length} total</span>
               </div>
@@ -172,21 +171,21 @@ export default function ProfilePage() {
               ) : (
                 <div className="space-y-4">
                   {reports.map((report) => (
-                    <div key={report.id} className="rounded-2xl border border-slate-200 p-4">
+                    <div key={report.id} className="rr-card-muted p-4">
                       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                         <div>
                           <p className="font-semibold text-slate-900">{report.address}</p>
-                          <p className="text-sm text-slate-500 mt-1">
+                          <p className="mt-1 text-sm text-slate-500">
                             Submitted on {new Date(report.createdAt).toLocaleString()}
                           </p>
-                          <p className="text-sm text-slate-600 mt-3">{report.description}</p>
+                          <p className="mt-3 text-sm text-slate-600">{report.description}</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClasses(report.status)}`}>
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses(report.status)}`}>
                             {report.status}
                           </span>
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
                               report.metadataStatus === 'verified'
                                 ? 'bg-emerald-100 text-emerald-800'
                                 : report.metadataStatus === 'rejected'
@@ -200,14 +199,12 @@ export default function ProfilePage() {
                       </div>
 
                       {report.cleanupEventId && report.status !== 'rejected' && (
-                        <div className="mt-4 rounded-2xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-800">
+                        <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                           Your report has been scheduled as a cleanup event.
                         </div>
                       )}
 
-                      {report.verificationNotes && (
-                        <p className="mt-4 text-sm text-slate-600">{report.verificationNotes}</p>
-                      )}
+                      {report.verificationNotes && <p className="mt-4 text-sm text-slate-600">{report.verificationNotes}</p>}
                     </div>
                   ))}
                 </div>
@@ -215,46 +212,40 @@ export default function ProfilePage() {
             </section>
 
             {(user.role === 'collector' || user.role === 'citizen') && (
-              <section className="bg-white rounded-3xl shadow-md p-6">
-                <div className="flex items-center justify-between mb-6">
+              <section className="rr-card p-6">
+                <div className="mb-6 flex items-center justify-between">
                   <h2 className="text-xl font-bold text-slate-900">Participation & Upcoming Work</h2>
                   <span className="text-sm text-slate-500">{myVolunteerEvents.length} events</span>
                 </div>
 
                 {myVolunteerEvents.length === 0 ? (
-                  <p className="text-slate-500">
-                    Volunteer registrations and assigned cleanup work will appear here.
-                  </p>
+                  <p className="text-slate-500">Volunteer registrations and assigned cleanup work will appear here.</p>
                 ) : (
                   <div className="space-y-4">
                     {myVolunteerEvents.map((event) => (
-                      <div key={event.id} className="rounded-2xl border border-slate-200 p-4">
+                      <div key={event.id} className="rr-card-muted p-4">
                         {resolveEventImage(event) ? (
-                          <img
-                            src={resolveEventImage(event)}
-                            alt={`Cleanup event for ${event.report?.address || 'reported site'}`}
-                            className="w-full h-40 object-cover rounded-2xl border border-slate-200 mb-4"
-                          />
+                          <div className="rr-image-frame mb-4">
+                            <img
+                              src={resolveEventImage(event)}
+                              alt={`Cleanup event for ${event.report?.address || 'reported site'}`}
+                              className="h-40 w-full object-cover"
+                            />
+                          </div>
                         ) : null}
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="font-semibold text-slate-900">
-                              {event.report?.address || 'Cleanup event'}
-                            </p>
-                            <p className="text-sm text-slate-500 mt-1">
-                              {new Date(event.scheduledAt).toLocaleString()}
-                            </p>
-                            <p className="text-sm text-slate-600 mt-2">
+                            <p className="font-semibold text-slate-900">{event.report?.address || 'Cleanup event'}</p>
+                            <p className="mt-1 text-sm text-slate-500">{new Date(event.scheduledAt).toLocaleString()}</p>
+                            <p className="mt-2 text-sm text-slate-600">
                               {event.location || event.report?.address || 'Location pending'}
                             </p>
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClasses(event.status)}`}>
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses(event.status)}`}>
                             {event.status}
                           </span>
                         </div>
-                        {event.eventNotes && (
-                          <p className="mt-3 text-sm text-slate-600">{event.eventNotes}</p>
-                        )}
+                        {event.eventNotes && <p className="mt-3 text-sm text-slate-600">{event.eventNotes}</p>}
                       </div>
                     ))}
                   </div>
@@ -264,8 +255,8 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-8">
-            <section className="bg-white rounded-3xl shadow-md p-6">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">Points History</h2>
+            <section className="rr-card p-6">
+              <h2 className="mb-6 text-xl font-bold text-slate-900">Points History</h2>
 
               {transactions.length === 0 ? (
                 <p className="text-slate-500">
@@ -274,19 +265,15 @@ export default function ProfilePage() {
               ) : (
                 <div className="space-y-4">
                   {transactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-start gap-3 rounded-2xl bg-slate-50 px-4 py-3">
-                      <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                        <Award className="w-5 h-5" />
+                    <div key={transaction.id} className="flex items-start gap-3 rounded-2xl bg-emerald-50/75 px-4 py-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                        <Award className="h-5 w-5" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="font-medium text-slate-900">
-                              {transaction.note || transaction.transactionType}
-                            </p>
-                            <p className="text-xs text-slate-500 mt-1">
-                              {new Date(transaction.createdAt).toLocaleString()}
-                            </p>
+                            <p className="font-medium text-slate-900">{transaction.note || transaction.transactionType}</p>
+                            <p className="mt-1 text-xs text-slate-500">{new Date(transaction.createdAt).toLocaleString()}</p>
                           </div>
                           <span className="text-sm font-bold text-emerald-700">+{transaction.points}</span>
                         </div>
@@ -297,19 +284,19 @@ export default function ProfilePage() {
               )}
             </section>
 
-            <section className="bg-white rounded-3xl shadow-md p-6">
-              <h2 className="text-xl font-bold text-slate-900 mb-6">Account Snapshot</h2>
+            <section className="rr-card p-6">
+              <h2 className="mb-6 text-xl font-bold text-slate-900">Account Snapshot</h2>
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-slate-700">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                   <span>{user.email}</span>
                 </div>
                 <div className="flex items-center gap-3 text-slate-700">
-                  <Clock3 className="w-5 h-5 text-sky-600" />
+                  <Clock3 className="h-5 w-5 text-sky-600" />
                   <span>Status: {user.status || 'active'}</span>
                 </div>
                 <div className="flex items-center gap-3 text-slate-700">
-                  <Calendar className="w-5 h-5 text-amber-600" />
+                  <Calendar className="h-5 w-5 text-amber-600" />
                   <span>
                     {transactions.length
                       ? `Last points update: ${new Date(transactions[0].createdAt).toLocaleDateString()}`

@@ -26,32 +26,29 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
   if (!user) return null;
 
   return (
-    <header className="bg-white/95 backdrop-blur shadow-sm border-b border-slate-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <button
-            onClick={() => onNavigate('dashboard')}
-            className="flex items-center text-left"
-          >
-            <div className="w-9 h-9 bg-gradient-to-br from-emerald-600 to-cyan-600 rounded-xl flex items-center justify-center mr-3">
-              <span className="text-white font-bold text-sm">RR</span>
+    <header className="sticky top-0 z-50 border-b border-white/55 bg-white/70 shadow-[0_16px_38px_rgba(10,49,42,0.08)] backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <button onClick={() => onNavigate('dashboard')} className="flex items-center text-left">
+            <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 shadow-[0_12px_24px_rgba(15,124,104,0.24)]">
+              <span className="text-sm font-bold text-white">RR</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">RiverRevive</h1>
-              <p className="text-xs text-slate-500">Land Cleanup Operations</p>
+              <h1 className="font-sans text-xl font-bold text-slate-900">RiverRevive</h1>
+              <p className="text-xs text-emerald-800/80">Clean and green operations hub</p>
             </div>
           </button>
 
-          <div className="hidden md:flex items-center space-x-8">
-            <nav className="flex space-x-2">
+          <div className="hidden items-center space-x-8 md:flex">
+            <nav className="flex space-x-2 rounded-full border border-white/70 bg-white/60 p-1.5 shadow-sm backdrop-blur-sm">
               {navItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => onNavigate(item.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                     currentPage === item.id
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-slate-600 hover:bg-slate-100'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white'
+                      : 'text-slate-600 hover:bg-white hover:text-slate-900'
                   }`}
                 >
                   {item.label}
@@ -61,7 +58,7 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="hidden sm:flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            <div className="hidden items-center gap-2 rounded-full border border-emerald-100/80 bg-emerald-50/85 px-3 py-2 text-sm text-emerald-800 sm:flex">
               <Bell size={16} />
               <span>{user.points} points</span>
             </div>
@@ -69,27 +66,27 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
             <div className="relative">
               <button
                 onClick={() => setShowDropdown((value) => !value)}
-                className="flex items-center space-x-2 text-slate-700 hover:text-emerald-700"
+                className="flex items-center space-x-2 text-slate-700 transition hover:text-emerald-700"
               >
-                <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50">
                   <User size={16} className="text-emerald-700" />
                 </div>
-                <span className="hidden sm:block font-medium">{user.name}</span>
+                <span className="hidden font-medium sm:block">{user.name}</span>
               </button>
 
               {showDropdown && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-lg border border-slate-200 py-2 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <div className="absolute right-0 mt-2 w-72 overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/90 py-2 shadow-[0_22px_48px_rgba(10,49,42,0.16)] backdrop-blur-xl">
+                  <div className="border-b border-emerald-100/80 bg-gradient-to-r from-emerald-50 to-cyan-50 px-4 py-4">
                     <p className="font-medium text-slate-900">{user.name}</p>
-                    <p className="text-sm text-slate-500 capitalize">{user.role}</p>
-                    <p className="text-sm font-medium text-emerald-700 mt-1">{user.points} points</p>
+                    <p className="text-sm capitalize text-slate-500">{user.role}</p>
+                    <p className="mt-1 text-sm font-medium text-emerald-700">{user.points} points</p>
                   </div>
                   <button
                     onClick={() => {
                       onNavigate('dashboard');
                       setShowDropdown(false);
                     }}
-                    className="w-full px-4 py-3 text-left text-slate-700 hover:bg-slate-50 flex items-center"
+                    className="flex w-full items-center px-4 py-3 text-left text-slate-700 transition hover:bg-emerald-50/70"
                   >
                     <LayoutDashboard size={16} className="mr-2" />
                     Dashboard
@@ -99,7 +96,7 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
                       onNavigate('profile');
                       setShowDropdown(false);
                     }}
-                    className="w-full px-4 py-3 text-left text-slate-700 hover:bg-slate-50 flex items-center"
+                    className="flex w-full items-center px-4 py-3 text-left text-slate-700 transition hover:bg-emerald-50/70"
                   >
                     <UserCircle2 size={16} className="mr-2" />
                     Profile
@@ -109,7 +106,7 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
                       setShowDropdown(false);
                       await logout();
                     }}
-                    className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 flex items-center"
+                    className="flex w-full items-center px-4 py-3 text-left text-red-600 transition hover:bg-red-50"
                   >
                     <LogOut size={16} className="mr-2" />
                     Logout
@@ -118,10 +115,7 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
               )}
             </div>
 
-            <button
-              onClick={() => setShowMobileMenu((value) => !value)}
-              className="md:hidden text-slate-600"
-            >
+            <button onClick={() => setShowMobileMenu((value) => !value)} className="text-slate-600 md:hidden">
               {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
@@ -129,8 +123,8 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
       </div>
 
       {showMobileMenu && (
-        <div className="md:hidden bg-white border-t border-slate-200">
-          <nav className="px-4 py-3 space-y-2">
+        <div className="border-t border-white/60 bg-white/82 backdrop-blur-xl md:hidden">
+          <nav className="space-y-2 px-4 py-3">
             {navItems.map((item) => (
               <button
                 key={item.id}
@@ -138,10 +132,10 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
                   onNavigate(item.id);
                   setShowMobileMenu(false);
                 }}
-                className={`block w-full text-left px-4 py-2 rounded-xl ${
+                className={`block w-full rounded-2xl px-4 py-3 text-left ${
                   currentPage === item.id
-                    ? 'bg-emerald-600 text-white'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white'
+                    : 'text-slate-600 hover:bg-emerald-50/80'
                 }`}
               >
                 {item.label}
