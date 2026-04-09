@@ -14,6 +14,7 @@ const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const mlServiceUrl = Deno.env.get("ML_SERVICE_URL");
 const mlServiceToken = Deno.env.get("ML_SERVICE_TOKEN");
 const reportImageBucket = Deno.env.get("REPORT_IMAGE_BUCKET") ?? "waste-report-images";
+const metadataThresholdMeters = Number(Deno.env.get("METADATA_THRESHOLD_METERS") ?? "10");
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
   throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
@@ -30,8 +31,15 @@ const supAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
   },
 });
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 const jsonHeaders = {
   "Content-Type": "application/json",
+  ...corsHeaders,
 };
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
@@ -100,6 +108,10 @@ async function uploadAnnotatedImage(
 }
 
 serve(async (req: { method: string; json: () => Promise<Record<string, unknown>>; }) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   if (req.method !== "POST") {
     return jsonResponse({ error: "Method not allowed" }, 405);
   }
@@ -160,6 +172,7 @@ serve(async (req: { method: string; json: () => Promise<Record<string, unknown>>
     );
     formData.append("browser_lat", String(browserLat));
     formData.append("browser_lng", String(browserLng));
+    formData.append("metadata_threshold_m", String(metadataThresholdMeters));
     formData.append(
       "run_detection_when_metadata_rejected",
       String(runDetectionWhenMetadataRejected),

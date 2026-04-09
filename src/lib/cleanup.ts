@@ -17,7 +17,8 @@ import type {
 } from '../types';
 
 const REPORT_IMAGE_BUCKET = 'waste-report-images';
-const METADATA_MATCH_THRESHOLD_METERS = 250;
+const METADATA_MATCH_THRESHOLD_METERS = 10;
+const pendingVerificationRequests = new Set<string>();
 
 function toNumber(value: unknown) {
   if (typeof value === 'number') return value;
@@ -204,6 +205,37 @@ function sanitizeFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9.\-_]/g, '-').toLowerCase();
 }
 
+function shouldRunBackendVerification(report: {
+  id: string;
+  status?: ReportStatus;
+  metadataStatus?: MetadataStatus;
+  mlStatus?: MlStatus;
+}) {
+  return (
+    report.status === 'pending' &&
+    report.metadataStatus === 'verified' &&
+    (report.mlStatus == null || report.mlStatus === 'pending')
+  );
+}
+
+function queueBackendVerification(report: {
+  id: string;
+  status?: ReportStatus;
+  metadataStatus?: MetadataStatus;
+  mlStatus?: MlStatus;
+}) {
+  if (!shouldRunBackendVerification(report) || pendingVerificationRequests.has(report.id)) {
+    return;
+  }
+
+  pendingVerificationRequests.add(report.id);
+  requestBackendReportVerification(report.id)
+    .catch((invokeError) => {
+      console.error('Unable to start backend verification for report:', report.id, invokeError);
+      pendingVerificationRequests.delete(report.id);
+    });
+}
+
 async function fetchProfilesByIds(profileIds: string[]) {
   const uniqueIds = [...new Set(profileIds)].filter(Boolean);
 
@@ -255,7 +287,9 @@ async function fetchReportsByIds(reportIds: string[]) {
   const reporterIds = (data ?? []).map((row) => row.reporter_id);
   const profilesById = await fetchProfilesByIdsSafe(reporterIds);
 
-  return (data ?? []).map((row) => mapReportRow(row, profilesById));
+  const reports = (data ?? []).map((row) => mapReportRow(row, profilesById));
+  reports.forEach(queueBackendVerification);
+  return reports;
 }
 
 export async function fetchCurrentUserProfile(userId: string) {
@@ -290,7 +324,9 @@ export async function fetchUserReports(userId: string) {
   const profile = await fetchCurrentUserProfile(userId);
   const profilesById = profile ? { [userId]: profile } : {};
 
-  return (data ?? []).map((row) => mapReportRow(row, profilesById));
+  const reports = (data ?? []).map((row) => mapReportRow(row, profilesById));
+  reports.forEach(queueBackendVerification);
+  return reports;
 }
 
 export async function fetchAllReports() {
@@ -305,7 +341,9 @@ export async function fetchAllReports() {
 
   const profilesById = await fetchProfilesByIdsSafe((data ?? []).map((row) => row.reporter_id));
 
-  return (data ?? []).map((row) => mapReportRow(row, profilesById));
+  const reports = (data ?? []).map((row) => mapReportRow(row, profilesById));
+  reports.forEach(queueBackendVerification);
+  return reports;
 }
 
 export async function fetchCleanupEvents() {
@@ -524,11 +562,7 @@ export async function submitWasteReport({
   const reporter = await fetchCurrentUserProfile(reporterId);
   const report = mapReportRow(data, reporter ? { [reporter.id]: reporter } : {});
 
-  if (metadataStatus === 'verified') {
-    requestBackendReportVerification(data.id).catch((invokeError) => {
-      console.error('Unable to start backend verification for report:', data.id, invokeError);
-    });
-  }
+  queueBackendVerification(report);
 
   return {
     report,
