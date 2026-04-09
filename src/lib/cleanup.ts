@@ -428,8 +428,12 @@ export function subscribeToCleanupUpdates(onChange: () => void) {
   };
 }
 
-async function requestBackendReportVerification(reportId: string) {
-  if (import.meta.env.VITE_ENABLE_BACKEND_REPORT_VERIFICATION !== 'true') {
+function isBackendReportVerificationEnabled() {
+  return import.meta.env.VITE_ENABLE_BACKEND_REPORT_VERIFICATION !== 'false';
+}
+
+export async function requestBackendReportVerification(reportId: string) {
+  if (!isBackendReportVerificationEnabled()) {
     return;
   }
 
@@ -439,6 +443,7 @@ async function requestBackendReportVerification(reportId: string) {
 
   if (error) {
     console.error('Background report verification failed:', error);
+    throw error;
   }
 }
 
@@ -518,7 +523,12 @@ export async function submitWasteReport({
 
   const reporter = await fetchCurrentUserProfile(reporterId);
   const report = mapReportRow(data, reporter ? { [reporter.id]: reporter } : {});
-  void requestBackendReportVerification(data.id);
+
+  if (metadataStatus === 'verified') {
+    requestBackendReportVerification(data.id).catch((invokeError) => {
+      console.error('Unable to start backend verification for report:', data.id, invokeError);
+    });
+  }
 
   return {
     report,

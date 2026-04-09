@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   Calendar,
@@ -18,6 +18,7 @@ import {
   fetchAllReports,
   fetchCleanupEvents,
   markEventOngoing,
+  requestBackendReportVerification,
   scheduleCleanupEvent,
   subscribeToCleanupUpdates,
 } from '../../lib/cleanup';
@@ -107,6 +108,7 @@ export default function AdminDashboard() {
   >({});
   const [pendingActionId, setPendingActionId] = useState('');
   const [selectedPendingReportId, setSelectedPendingReportId] = useState<string | null>(null);
+  const mlRetryRequestedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let active = true;
@@ -195,6 +197,22 @@ export default function AdminDashboard() {
       location: report.address,
     }));
   };
+
+  useEffect(() => {
+    const pendingMlReports = pendingReports.filter((report) => report.mlStatus === 'pending');
+
+    pendingMlReports.forEach((report) => {
+      if (mlRetryRequestedRef.current.has(report.id)) {
+        return;
+      }
+
+      mlRetryRequestedRef.current.add(report.id);
+      requestBackendReportVerification(report.id).catch((invokeError) => {
+        console.error('Admin retry for ML verification failed:', report.id, invokeError);
+        mlRetryRequestedRef.current.delete(report.id);
+      });
+    });
+  }, [pendingReports]);
 
   const handleScheduleEvent = async () => {
     if (!user || !scheduleForm.reportId || !scheduleForm.scheduledAt || !scheduleForm.location.trim()) {
