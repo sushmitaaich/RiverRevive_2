@@ -140,8 +140,7 @@ export default function AdminDashboard() {
       reports.filter(
         (report) =>
           report.status === 'pending' &&
-          report.metadataStatus === 'verified' &&
-          report.mlStatus === 'verified',
+          report.metadataStatus === 'verified',
       ),
     [reports],
   );
@@ -396,7 +395,7 @@ export default function AdminDashboard() {
 
                   {pendingReports.length === 0 ? (
                     <p className="text-slate-500">
-                      No reports have passed both metadata verification and ML garbage detection yet.
+                      No metadata-verified reports are waiting for scheduling right now.
                     </p>
                   ) : (
                     <div className="space-y-4">
@@ -413,8 +412,16 @@ export default function AdminDashboard() {
                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
                               metadata verified
                             </span>
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              ml verified
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                report.mlStatus === 'verified'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : report.mlStatus === 'rejected'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              ml {report.mlStatus ?? 'pending'}
                             </span>
                             <span
                               className={`px-2 py-1 rounded-full text-xs font-medium ${priorityClasses(
@@ -584,7 +591,7 @@ export default function AdminDashboard() {
                           {new Date(report.createdAt).toLocaleString()}
                         </td>
                         <td className="py-4 px-4">
-                          {report.status === 'pending' ? (
+                          {report.status === 'pending' && report.metadataStatus === 'verified' ? (
                             <button
                               onClick={() =>
                                 setScheduleForm({
@@ -599,6 +606,8 @@ export default function AdminDashboard() {
                             >
                               Schedule
                             </button>
+                          ) : report.status === 'pending' ? (
+                            <span className="text-slate-400 text-sm">Awaiting verification</span>
                           ) : (
                             <span className="text-slate-400 text-sm">Managed</span>
                           )}

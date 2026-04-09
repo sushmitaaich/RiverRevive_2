@@ -220,6 +220,7 @@ before update on public.cleaning_events
 for each row execute function public.set_updated_at();
 
 drop function if exists public.schedule_cleanup_event(uuid, timestamptz, integer, text, uuid);
+drop function if exists public.schedule_cleanup_event(uuid, timestamptz, text, integer, text, uuid);
 create or replace function public.schedule_cleanup_event(
   p_report_id uuid,
   p_scheduled_at timestamptz,
@@ -240,7 +241,7 @@ declare
 begin
   select
     address,
-    coalesce(ml_annotated_image_url, (images ->> 0))
+    coalesce(ml_annotated_image_url, images[1])
   into v_report_address, v_before_url
   from public.garbage_reports
   where id = p_report_id
